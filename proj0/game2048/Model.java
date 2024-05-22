@@ -5,7 +5,7 @@ import java.util.Observable;
 
 
 /** The state of a game of 2048.
- *  @author TODO: YOUR NAME HERE
+ *  @author 41p
  */
 public class Model extends Observable {
     /** Current contents of the board. */
@@ -95,7 +95,7 @@ public class Model extends Observable {
     }
 
     /** Tilt the board toward SIDE. Return true iff this changes the board.
-     *
+     * <p>
      * 1. If two Tile objects are adjacent in the direction of motion and have
      *    the same value, they are merged into one Tile of twice the original
      *    value and that new value is added to the score instance variable
@@ -106,14 +106,224 @@ public class Model extends Observable {
      *    value, then the leading two tiles in the direction of motion merge,
      *    and the trailing tile does not.
      * */
+
+    public void movetilehelper (int c ,int rfrom ,int rto){
+        Tile t = board.tile(c,rfrom);
+        board.move(c,rto,t);
+    }
+    public boolean dealonec (int c){
+        boolean ifchanged = false;
+        if (board.tile(c,3) != null){
+            if (board.tile(c,2) != null){
+                if (board.tile(c,1) != null){
+                    if (board.tile(c,0) != null){
+                        if (board.tile(c,3).value() == board.tile(c,2).value()){
+                            score += 2*board.tile(c,3).value();
+                            if (board.tile(c,1).value() == board.tile(c,0).value()){
+                                score += 2*board.tile(c,1).value();
+                                movetilehelper(c,2,3);
+                                movetilehelper(c,0,2);
+                                movetilehelper(c,1,2);
+                            }
+                            else {
+                                movetilehelper(c,2,3);
+                                movetilehelper(c,1,2);
+                                movetilehelper(c,0,1);
+                            }
+                            ifchanged = true;
+                        }
+                        else if (board.tile(c,1).value() == board.tile(c,2).value()){
+                            score += 2*board.tile(c,2).value();
+                            movetilehelper(c,1,2);
+                            movetilehelper(c,0,1);
+                            ifchanged = true;
+                        }
+                        else if (board.tile(c,1).value() == board.tile(c,0).value()){
+                            score += 2*board.tile(c,0).value();
+                            movetilehelper(c,0,1);
+                            ifchanged = true;
+                        }
+                        else
+                            return false;
+
+                    } /*1 1 1 1*/
+                    else {
+                        if (board.tile(c,3).value() == board.tile(c,2).value()){
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c,2,3);
+                            movetilehelper(c,1,2);
+                            ifchanged = true;
+                        }
+                        else if (board.tile(c,2).value() == board.tile(c,1).value()){
+                            score += 2*board.tile(c,2).value();
+                            movetilehelper(c,1,2);
+                            ifchanged = true;
+                        }
+                        else
+                            return false;
+                    } /*1 1 1 0*/
+                } /*1 1 1 x*/
+                else {
+                    if (board.tile(c,0) != null){
+                        if (board.tile(c,3).value() == board.tile(c,2).value()){
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c,2,3);
+                            movetilehelper(c,0,2);
+                        }
+                        else if (board.tile(c,2).value() == board.tile(c,0).value()) {
+                            score += 2*board.tile(c,2).value();
+                            movetilehelper(c,0,2);
+                        }
+                        else
+                            movetilehelper(c,0,1);
+                        ifchanged = true;
+                    } /*1 1 0 1*/
+                    else {
+                        if (board.tile(c, 3).value() == board.tile(c, 2).value()){
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c, 2, 3);
+                            ifchanged = true;
+                        }
+                        else
+                            return false;
+                    } /*1 1 0 0*/
+                } /*1 1 0 x*/
+            } /*1 1 x x*/
+            else {
+                if (board.tile(c,1) != null){
+                    if (board.tile(c,0) != null){
+                        if (board.tile(c,3).value() == board.tile(c,1).value()){
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c,1,3);
+                            movetilehelper(c,0,2);
+                        }
+                        else if (board.tile(c,1).value() == board.tile(c,0).value()) {
+                            score += 2*board.tile(c,1).value();
+                            movetilehelper(c,1,2);
+                            movetilehelper(c,0,2);
+                        }
+                        else {
+                            movetilehelper(c,1,2);
+                            movetilehelper(c,0,1);
+                        }
+                    } /*1 0 1 1*/
+                    else {
+                        if (board.tile(c,3).value() == board.tile(c,1).value()) {
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c, 1, 3);
+                        }
+                        else
+                            movetilehelper(c,1,2);
+                    } /*1 0 1 0*/
+                    ifchanged = true;
+                } /*1 0 1 x*/
+                else {
+                    if (board.tile(c,0) != null){
+                        if (board.tile(c,3).value() == board.tile(c,0).value()) {
+                            score += 2*board.tile(c,3).value();
+                            movetilehelper(c, 0, 3);
+                        }
+                        else
+                            movetilehelper(c,0,2);
+                        ifchanged = true;
+                    } /*1 0 0 1*/
+                    else {
+                        return false;
+                    } /*1 0 0 0*/
+                } /*1 0 0 x*/
+            } /*1 0 x x*/
+        } /*1 x x x*/
+        else if (board.tile(c,2) != null) {
+            if (board.tile(c,1) != null){
+                if (board.tile(c,0) != null){
+                    if (board.tile(c,2).value() == board.tile(c,1).value()){
+                        score += 2*board.tile(c,2).value();
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,1,3);
+                        movetilehelper(c,0,2);
+                        ifchanged =true;
+                    }
+                    else if (board.tile(c,0).value() == board.tile(c,1).value()){
+                        score += 2*board.tile(c,1).value();
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,1,2);
+                        movetilehelper(c,0,2);
+                        ifchanged = true;
+                    }
+                    else {
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,1,2);
+                        movetilehelper(c,0,1);
+                        ifchanged = true;
+                    }
+                } /*0 1 1 1*/
+                else {
+                    if (board.tile(c,2).value() == board.tile(c,1).value()){
+                        score += 2*board.tile(c,2).value();
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,1,3);
+                    }
+                    else {
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,1,2);
+                    }
+                    ifchanged = true;
+                } /*0 1 1 0*/
+            } /*0 1 1 x*/
+            else {
+                if (board.tile(c,0) != null){
+                    if(board.tile(c,2).value() == board.tile(c,0).value()){
+                        score += 2*board.tile(c,2).value();
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,0,3);
+                    }
+                    else {
+                        movetilehelper(c,2,3);
+                        movetilehelper(c,0,2);
+                    }
+                } /*0 1 0 1*/
+                else {
+                    movetilehelper(c,2,3);
+                } /*0 1 0 0*/
+                ifchanged = true;
+            } /*0 1 0 x*/
+        } /*0 1 x x*/
+        else if (board.tile(c,1) != null) {
+            if (board.tile(c,0) != null){
+                if (board.tile(c,1).value() == board.tile(c,0).value()){
+                    score += 2*board.tile(c,1).value();
+                    movetilehelper(c,1,3);
+                    movetilehelper(c,0,3);
+                }
+                else {
+                    movetilehelper(c,1,3);
+                    movetilehelper(c,0,2);
+                }
+            } /*0 0 1 1*/
+            else {
+                movetilehelper(c,1,3);
+                ifchanged = true;
+            } /*0 0 1 0*/
+        } /*0 0 1 x*/
+        else if (board.tile(c,0) != null) {
+            movetilehelper(c,0,3);
+            ifchanged = true;
+        } /*0 0 0 1*/
+        return ifchanged;
+    }
     public boolean tilt(Side side) {
         boolean changed;
         changed = false;
-
+        board.setViewingPerspective(side);
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
-
+        for (int c = 0; c < board.size(); c++){
+            if (dealonec(c)){
+                changed =true;
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -137,7 +347,13 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        // TODO: Fill in this function.
+        // DONE: Fill in this function.
+        for (int i = 0; i < b.size(); i++){
+            for (int j = 0; j < b.size(); j++){
+                if (b.tile(i,j) == null)
+                    return true;
+            }
+        }
         return false;
     }
 
@@ -147,7 +363,15 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        // TODO: Fill in this function.
+        // DONE: Fill in this function.
+        for (int i = 0; i < b.size(); i++){
+            for (int j = 0; j < b.size(); j++){
+                if (b.tile(i,j) != null){
+                    if (b.tile(i,j).value() == MAX_PIECE)
+                        return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -158,13 +382,60 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        // DONE: Fill in this function.
+        if (emptySpaceExists(b)||maxTileExists(b))
+            return true;
+        /*遍历所有瓷砖，并分情况判断*/
+        for(int i = 0; i < b.size(); i++){
+            for(int j = 0; j<b.size(); j++){
+                /*四个角*/
+                if (i+j == 0){
+                    if (b.tile(i,j).value() == b.tile(1,0).value() ||
+                            b.tile(i,j).value() == b.tile(1,0).value())
+                        return true;
+                }
+                else if (i == 0 && j == b.size()-1){
+                    if (b.tile(i,j).value() == b.tile(1,j).value() ||
+                            b.tile(i,j).value() == b.tile(0,j-1).value())
+                        return true;
+                }
+                else if (j == 0 && i == b.size()-1){
+                    if (b.tile(i,j).value() == b.tile(i,1).value() ||
+                            b.tile(i,j).value() == b.tile(i-1,0).value())
+                        return true;
+                }
+                else if (i + j + 2 == 2*b.size()){
+                    if (b.tile(i,j).value() == b.tile(i-1,j).value() ||
+                            b.tile(i,j).value() == b.tile(i,j-1).value())
+                        return true;
+                }
+                /*四条边*/
+                else if (i == 0 || i == b.size()-1) {
+                    if(b.tile(i,j).value() == b.tile(i,j+1).value() ||
+                            b.tile(i,j).value() == b.tile(i,j-1).value())
+                        return true;
+                }
+                else if (j == 0 || j == b.size()-1) {
+                    if(b.tile(i,j).value() == b.tile(i+1,j).value() ||
+                            b.tile(i,j).value() == b.tile(i-1,j).value())
+                        return true;
+                }
+                /*大肚皮*/
+                else {
+                    if(b.tile(i,j).value() == b.tile(i+1,j).value() ||
+                            b.tile(i,j).value() == b.tile(i-1,j).value() ||
+                            b.tile(i,j).value() == b.tile(i,j+1).value() ||
+                            b.tile(i,j).value() == b.tile(i,j-1).value())
+                        return true;
+                }
+            }
+        }
         return false;
     }
 
 
     @Override
-     /** Returns the model as a string, used for debugging. */
+    /* Returns the model as a string, used for debugging. */
     public String toString() {
         Formatter out = new Formatter();
         out.format("%n[%n");
@@ -184,7 +455,7 @@ public class Model extends Observable {
     }
 
     @Override
-    /** Returns whether two models are equal. */
+    /* Returns whether two models are equal. */
     public boolean equals(Object o) {
         if (o == null) {
             return false;
@@ -196,7 +467,7 @@ public class Model extends Observable {
     }
 
     @Override
-    /** Returns hash code of Model’s string. */
+    /* Returns hash code of Model’s string. */
     public int hashCode() {
         return toString().hashCode();
     }
