@@ -111,6 +111,29 @@ public class Model extends Observable {
         Tile t = board.tile(c,rfrom);
         board.move(c,rto,t);
     }
+    public void tilty(Side side) {
+        // TODO: Modify this.board (and if applicable, this.score) to account
+        // for the tilt to the Side SIDE.
+        this.board.setViewingPerspective(side);
+        for (int i = 0; i < size(); i++) {
+            int prow = size() ,nrow , v;
+            for (int  j = size() - 2; j >= 0; j--)
+                if (tile(i, j) != null) {
+                    nrow = j; v = tile(i, j).value();
+                    for(int k = j + 1; k < prow; k++) {
+                        if(tile(i, k) == null) {
+                            nrow = k;}
+                        else {
+                            if(tile(i, k).value() == v) {
+                                prow = nrow = k;
+                                this.score += 2 * v;}
+                            break;}}
+                    Tile t = tile(i ,j);
+                    this.board.move(i, nrow, t);}}
+        board.setViewingPerspective(Side.NORTH);
+        checkGameOver();
+
+    }
     public boolean dealonec (int c){
         boolean ifchanged = false;
         if (board.tile(c,3) != null){
