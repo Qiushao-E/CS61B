@@ -212,5 +212,35 @@ public class LinkedListDequeTest {
         assertNull(intDeque.get(1000));
         assertNull(intDeque.getRecursive(1000));
     }
+
+    @Test
+    public void testEquals(){
+        LinkedListDeque<Integer> intDeque1 = new LinkedListDeque<>();
+        LinkedListDeque<Integer> intDeque2 = new LinkedListDeque<>();
+
+        boolean flagEquals1 = intDeque1.equals(intDeque2);
+        assertTrue(flagEquals1);
+
+        intDeque1.addLast(1);
+        boolean flagNotEquals1 = intDeque1.equals(intDeque2);
+        assertFalse(flagNotEquals1);
+
+        boolean flagNotEquals2 = intDeque1.equals(123);
+        assertFalse(flagNotEquals2);
+
+        intDeque2.addLast(1);
+        intDeque1.addFirst(3);
+        intDeque2.addFirst(3);
+        boolean flagEquals2 = intDeque1.equals(intDeque2);
+        assertTrue(flagEquals2);
+
+        intDeque1.addFirst(123);
+        boolean flagNotEquals3 = intDeque1.equals(intDeque2);
+        assertFalse(flagNotEquals3);
+
+        intDeque2.addFirst(234);
+        boolean flagNotEquals4 = intDeque1.equals(intDeque2);
+        assertFalse(flagNotEquals4);
+    }
 }
 

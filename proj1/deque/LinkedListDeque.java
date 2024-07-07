@@ -140,4 +140,24 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return getRecursiveHelper(index - 1, current.next);
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        boolean flag = o instanceof LinkedListDeque;
+        if (o == null || !flag) {
+            return false;
+        } else {
+            LinkedListDeque lld = (LinkedListDeque) o;
+            if (size != lld.size()){
+                return false;
+            } else {
+                for (int i = 0; i < size; i++){
+                    if (!this.get(i).equals(lld.get(i))){
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
 }
