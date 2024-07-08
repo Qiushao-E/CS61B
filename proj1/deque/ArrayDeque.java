@@ -69,11 +69,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    @Override
     public int size() {
         return this.size;
     }
@@ -134,8 +129,6 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return items[arrayDequeIndex];
     }
 
-
-
     public void resize(int newLength, int firstIndex, int lastIndex) {
         T[] tmp = (T[]) new Object[newLength];
         if (nextFirst >= nextLast) {
@@ -160,5 +153,24 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             nextLast = copyLength + 1;
         }
         items = tmp;
+    }
+
+    public boolean equals(Object o) {
+        boolean flag = o instanceof ArrayDeque;
+        if (o == null || !flag) {
+            return false;
+        } else {
+            ArrayDeque lld = (ArrayDeque) o;
+            if (size != lld.size()) {
+                return false;
+            } else {
+                for (int i = 0; i < size; i++) {
+                    if (!this.get(i).equals(lld.get(i))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 }

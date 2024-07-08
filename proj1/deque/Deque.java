@@ -12,7 +12,9 @@ public interface Deque<T> {
     public void addLast(T item);
     /* add an item at the last of the deque */
 
-    public boolean isEmpty();
+    default public boolean isEmpty(){
+        return this.size() == 0;
+    }
     /* return if the deque is empty */
 
     public int size();
@@ -30,10 +32,5 @@ public interface Deque<T> {
     public T get(int index);
     /* return the item at the index position, using iterator */
 
-    public Iterator<T> iterator();
-    /* return the iterator of the deque */
-
-    public boolean equals(Object o);
-    /* return if o is equal to the deque */
 
 }
