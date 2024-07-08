@@ -1,8 +1,10 @@
 package deque;
 
 import java.util.Iterator;
-import java.util.Objects;
 
+/**
+ * @param <T>
+ */
 public interface Deque<T> {
     public void addFirst(T item);
     /* add an item at the first of the deque */
