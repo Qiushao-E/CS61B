@@ -27,7 +27,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private class ArrayDequeIterator implements Iterator<T> {
         private int index;
 
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             index = (nextFirst + 1) % items.length;
         }
 
@@ -133,7 +133,8 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         T[] tmp = (T[]) new Object[newLength];
         if (nextFirst >= nextLast) {
             System.arraycopy(items, 0, tmp, 0, firstIndex + 1);
-            System.arraycopy(items, lastIndex, tmp, newLength + lastIndex - items.length, items.length - lastIndex);
+            int length = items.length - lastIndex;
+            System.arraycopy(items, lastIndex, tmp, newLength + lastIndex - items.length, length);
             nextFirst += (newLength - items.length);
         } else {
             int start, end, copyLength;
