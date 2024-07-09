@@ -34,19 +34,6 @@ public class ArrayDequeTest {
         assertNull(intDeque.get(1000));
     }
 
-    /**
-     * Test the resize method, including make the array bigger and smaller
-     */
-    @Test
-    public void resizeTest() {
-        ArrayDeque<Integer> intDeque = new ArrayDeque<>();
-        for (int i = 0; i < 50; i++){
-            intDeque.addLast(i);
-        }
-        intDeque.resize(52, 46, 61);
-        intDeque.resize(100, 46, 49);
-    }
-
     @Test
     public void sizeTest() {
         ArrayDeque<Integer> intDeque = new ArrayDeque<>();

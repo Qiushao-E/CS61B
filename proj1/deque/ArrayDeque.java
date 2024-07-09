@@ -129,7 +129,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         return items[arrayDequeIndex];
     }
 
-    public void resize(int newLength, int firstIndex, int lastIndex) {
+    private void resize(int newLength, int firstIndex, int lastIndex) {
         T[] tmp = (T[]) new Object[newLength];
         if (nextFirst >= nextLast) {
             System.arraycopy(items, 0, tmp, 0, firstIndex + 1);
@@ -156,16 +156,16 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     public boolean equals(Object o) {
-        boolean flag = o instanceof ArrayDeque;
+        boolean flag = o instanceof Deque;
         if (o == null || !flag) {
             return false;
         } else {
-            ArrayDeque lld = (ArrayDeque) o;
-            if (size != lld.size()) {
+            Deque d = (Deque) o;
+            if (size != d.size()) {
                 return false;
             } else {
                 for (int i = 0; i < size; i++) {
-                    if (!this.get(i).equals(lld.get(i))) {
+                    if (!this.get(i).equals(d.get(i))) {
                         return false;
                     }
                 }
