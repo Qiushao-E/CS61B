@@ -1,7 +1,5 @@
 package deque;
 
-import java.util.Iterator;
-
 /**
  * @param <T>
  */
@@ -12,7 +10,7 @@ public interface Deque<T> {
     void addLast(T item);
     /* add an item at the last of the deque */
 
-    default boolean isEmpty(){
+    default boolean isEmpty() {
         return this.size() == 0;
     }
     /* return if the deque is empty */
