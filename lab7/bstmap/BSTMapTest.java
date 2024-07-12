@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 public class BSTMapTest {
     @Test
     public void basicTest() {
-        BSTMap<Integer, String> map = new BSTMap<>(4, "123");
+        BSTMap<Integer, String> map = new BSTMap<>();
         map.put(2, "I");
         map.put(1, "am");
         map.put(3, "a");

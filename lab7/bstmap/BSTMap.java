@@ -29,14 +29,6 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
     }
 
     /**
-     * Create a new BSTMap with a key-value pair.
-     */
-    public BSTMap(K key, V value) {
-        this.size = 1;
-        root = new BSTNode(key, value);
-    }
-
-    /**
      * Removes all the mappings from this map.
      */
     @Override
@@ -159,7 +151,7 @@ public class BSTMap<K extends Comparable<K>, V> implements Map61B<K, V> {
      * @return an Iterator.
      */
     @Override
-    public Iterator iterator() {
+    public Iterator<K> iterator() {
         throw new UnsupportedOperationException();
     }
 }
