@@ -16,5 +16,6 @@ public class BSTMapTest {
         map.put(5, "woman");
         assertTrue(map.containsKey(6));
         assertFalse(map.containsKey(0));
+        map.printInOrder();
     }
 }
