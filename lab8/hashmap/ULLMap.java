@@ -29,7 +29,7 @@ public class ULLMap<K, V>  implements Map61B<K, V> {
         return size;
     }
 
-    /** Removes all of the mappings from this map. */
+    /** Removes all the mappings from this map. */
     @Override
     public void clear() {
         size = 0;
