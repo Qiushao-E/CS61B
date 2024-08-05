@@ -240,7 +240,7 @@ class Utils {
 
     static void mkdir(File file) {
         if (!file.exists()) {
-            file.mkdir();
+            file.mkdirs();
         }
     }
 

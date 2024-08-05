@@ -25,13 +25,13 @@ public class Commit implements Serializable {
      */
 
     /** The message of this Commit. */
-    private String message;
+    private final String message;
     private String id;
-    private String parent;
+    private final List<String> parents;
     private List<String> blobs;
     private Map<String, String> pathToBlobs;
-    private String timeStamp;
-    private Date currentTime;
+    private final String timeStamp;
+    private final Date currentTime;
 
     /* TODO: fill in the rest of this class. */
     /**
@@ -39,25 +39,26 @@ public class Commit implements Serializable {
      */
     public Commit() {
         this.message = "initial commit";
-        this.parent = "null";
+        this.parents = new ArrayList<>();
         this.blobs = new ArrayList<>();
         this.pathToBlobs = new TreeMap<>();
         this.currentTime = new Date(0);
         this.timeStamp = dateToTimeStamp(currentTime);
-        this.id = gernerateId();
+        generateId();
     }
 
     /**
-     * the default commit instructor
+     * the default commit instructor, creating a commit with a parent commit.
      */
-    public Commit(String message, String parent) {
+    public Commit(String message, Commit parent) {
         this.message = message;
-        this.parent = parent;
-        this.blobs = new ArrayList<>();
-        this.pathToBlobs = new TreeMap<>();
+        this.parents = new ArrayList<>();
+        this.parents.add(parent.getId());
+        this.blobs = parent.blobs;
+        this.pathToBlobs = parent.pathToBlobs;
         this.currentTime = new Date();
         this.timeStamp = dateToTimeStamp(currentTime);
-        this.id = gernerateId();
+        generateId();
     }
 
     private static String dateToTimeStamp(Date date) {
@@ -65,17 +66,30 @@ public class Commit implements Serializable {
         return dateFormat.format(date);
     }
 
-    private String gernerateId() {
-        return sha1(message, parent, blobs.toString(), pathToBlobs.toString(), timeStamp);
+    private void generateId() {
+        this.id =  sha1(message, parents.toString(), blobs.toString(), pathToBlobs.toString(), timeStamp);
     }
 
     public String getId() {
         return this.id;
     }
 
+    public Map<String, String> getPathToBlobs() {
+        return pathToBlobs;
+    }
+
     public void saveToFile() {
+        generateId();
         File commit = join(COMMIT_DIR, id);
         createNewFile(commit);
         writeObject(commit, this);
+    }
+
+    public void addBlob(String blobPath ,String id) {
+        pathToBlobs.put(blobPath, id);
+    }
+
+    public void removeBlob(String blobPath) {
+        pathToBlobs.remove(blobPath);
     }
 }

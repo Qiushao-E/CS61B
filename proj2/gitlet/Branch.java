@@ -7,21 +7,29 @@ import static gitlet.Repository.BRANCH_DIR;
 
 public class Branch implements Serializable {
     private String commitPointer;
-    private String branchName;
+    private final String branchName;
 
-    public Branch(String id) {
+    public Branch(Commit commit) {
         branchName = "master";
-        commitPointer = id;
+        commitPointer = commit.getId();
     }
 
-    public Branch(String name, String id) {
+    public Branch(String name, Commit commit) {
         branchName = name;
-        commitPointer = id;
+        commitPointer = commit.getId();
     }
 
     public void saveToFile() {
         File branch = join(BRANCH_DIR, branchName);
         createNewFile(branch);
         writeObject(branch, this);
+    }
+
+    public void setCommitPointer(Commit commit) {
+        commitPointer = commit.getId();
+    }
+
+    public String getCommitId() {
+        return commitPointer;
     }
 }

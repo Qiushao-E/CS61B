@@ -16,17 +16,24 @@ public class Main {
         String firstArg = args[0];
         switch(firstArg) {
             case "init":
-                // TODO: handle the `init` command
+                checkArgsNumber(args,1);
                 Repository.init();
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
+                checkArgsNumber(args,2);
+                Repository.add(args[1]);
                 break;
             case "commit":
-                // TODO: handle the `commit [message]` command
+                if (args.length == 1) {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
+                checkArgsNumber(args, 2);
+                Repository.commit(args[1]);
                 break;
             case "rm":
-                // TODO: handle the `rm` command
+                checkArgsNumber(args, 2);
+                Repository.remove(args[1]);
                 break;
             case "log":
                 // TODO: handle the `log` command
@@ -62,7 +69,7 @@ public class Main {
 
     }
 
-    private void checkArgsNumber(String[] args, int number) {
+    private static void checkArgsNumber(String[] args, int number) {
         if (args.length != number) {
             System.out.println("Incorrect operands.");
             System.exit(0);
