@@ -57,13 +57,13 @@ public class Repository {
     public static final File STAGE_DIR = join(GITLET_DIR, "stages");
 
     /** The HEAD pointer. */
-    public static File HEAD = join(GITLET_DIR, "HEAD");
+    private static final File HEAD = join(GITLET_DIR, "HEAD");
 
     /** The current commit. */
     private static Commit currentCommit;
 
     /** The current branch. */
-    private static File currentBranch = join(GITLET_DIR, "BRANCH");
+    private static final File CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
 
     /* TODO: fill in the rest of this class. */
 
@@ -123,8 +123,8 @@ public class Repository {
     private static void initMaster() {
         Branch master = new Branch(currentCommit);
         master.saveToFile();
-        createNewFile(currentBranch);
-        writeContents(currentBranch, "master");
+        createNewFile(CURRENT_BRANCH);
+        writeContents(CURRENT_BRANCH, "master");
     }
 
     /**
@@ -141,7 +141,7 @@ public class Repository {
      *  Set the branch pointer at the current commit.
      */
     private static void setBranch() {
-        File branchFile = join(BRANCH_DIR, readContentsAsString(currentBranch));
+        File branchFile = join(BRANCH_DIR, readContentsAsString(CURRENT_BRANCH));
         Branch branch = readObject(branchFile, Branch.class);
         branch.setCommitPointer(currentCommit);
         branch.saveToFile();
@@ -206,8 +206,8 @@ public class Repository {
                 newCommit.addBlob(addBlobPath, addBlobs.get(addBlobPath));
             }
             for (String blobPath: commitBlobs.keySet()) {
-                if (Objects.equals(blobPath, addBlobPath) &&
-                        !Objects.equals(commitBlobs.get(blobPath), addBlobs.get(addBlobPath))) {
+                if (Objects.equals(blobPath, addBlobPath)
+                        && !Objects.equals(commitBlobs.get(blobPath), addBlobs.get(addBlobPath))) {
                     toRemove.add(blobPath);
                     toAdd.add(blobPath);
                 }
@@ -237,8 +237,8 @@ public class Repository {
      * Return the commit that HEAD pointed at.
      */
     private static Commit readHEAD() {
-        File HEADCommit = join(COMMIT_DIR, readContentsAsString(HEAD));
-        return readObject(HEADCommit, Commit.class);
+        File headCommit = join(COMMIT_DIR, readContentsAsString(HEAD));
+        return readObject(headCommit, Commit.class);
     }
 
     /**
@@ -291,26 +291,124 @@ public class Repository {
         Map<String, String> addBlobs = readAddStage().getPathToBlobs();
         Map<String, String> currentCommitBlobs = readHEAD().getPathToBlobs();
         String filePath = join(CWD, fileName).getPath();
-        if (addBlobs.containsKey(filePath) || currentCommitBlobs.containsKey(filePath)) {
+        if (!addBlobs.containsKey(filePath) && !currentCommitBlobs.containsKey(filePath)) {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
     }
 
+    /**
+     * The log command.
+     */
+    public static void log() {
+        checkIfTheDirectoryExist();
+        currentCommit = readHEAD();
+        while (!Objects.equals(currentCommit.getFirstParent(), "GOD")) {
+            currentCommit.print();
+            File next = join(COMMIT_DIR, currentCommit.getFirstParent());
+            currentCommit = readObject(next, Commit.class);
+        }
+        currentCommit.print();
+    }
 
+    /**
+     * The global-log command.
+     */
+    public static void globalLog() {
+        checkIfTheDirectoryExist();
+        List<String> commits = plainFilenamesIn(COMMIT_DIR);
+        assert commits != null;
+        for (String commitId: commits) {
+            File commitFile = join(COMMIT_DIR, commitId);
+            readObject(commitFile, Commit.class).print();
+        }
+    }
 
+    /**
+     * The find [commitMessage] command.
+     * @param commitMessage the message that the printed commits contain
+     */
+    public static void find(String commitMessage) {
+        checkIfTheDirectoryExist();
+        List<String> commitToPrint = new ArrayList<>();
+        List<String> commits = plainFilenamesIn(COMMIT_DIR);
+        assert commits != null;
+        for (String commitId: commits) {
+            File commitFile = join(COMMIT_DIR, commitId);
+            String message = readObject(commitFile, Commit.class).getMessage();
+            if (Objects.equals(commitMessage, message)) {
+                commitToPrint.add(commitId);
+            }
+        }
+        if (commitToPrint.isEmpty()) {
+            System.out.println("Found no commit with that message.");
+        } else {
+            for (String commitId: commitToPrint) {
+                System.out.println(commitId);
+            }
+        }
+    }
 
+    /**
+     * The status command.
+     */
+    public static void status() {
+        checkIfTheDirectoryExist();
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        String currentBranch = readContentsAsString(CURRENT_BRANCH);
+        System.out.println("=== Branches ===");
+        assert branches != null;
+        for (String branchName: branches) {
+            if (Objects.equals(branchName, currentBranch)) {
+                System.out.println("*" + branchName);
+            } else {
+                System.out.println(branchName);
+            }
+        }
+        System.out.println("\n=== Staged Files ===");
+        readAddStage().print();
+        System.out.println("\n=== Removed Files ===");
+        readRemoveStage().print();
+        System.out.println("\n=== Modifications Not Staged For Commit ===");
+        System.out.println("\n=== Untracked Files ===\n");
+    }
 
+    /**
+     * The branch [branchName] command.
+     * @param branchName the new branch name
+     */
+    public static void branch(String branchName) {
+        checkIfTheDirectoryExist();
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        assert branches != null;
+        if (branches.contains(branchName)) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Branch branch = new Branch(branchName, readHEAD());
+        branch.saveToFile();
+    }
 
-
-
-
-
-
-
-
-
-
+    /**
+     * The rm-branch [branchName] command.
+     * @param branchName the name of the branch to be removed.
+     */
+    public static void removeBranch(String branchName) {
+        checkIfTheDirectoryExist();
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        assert branches != null;
+        if (!branches.contains(branchName)) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currentBranch = readContentsAsString(CURRENT_BRANCH);
+        if (currentBranch.equals(branchName)) {
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        File branchFile = join(BRANCH_DIR, branchName);
+        branchFile.delete();
+    }
 
 
 

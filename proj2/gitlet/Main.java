@@ -14,13 +14,13 @@ public class Main {
             System.exit(0);
         }
         String firstArg = args[0];
-        switch(firstArg) {
+        switch (firstArg) {
             case "init":
-                checkArgsNumber(args,1);
+                checkArgsNumber(args, 1);
                 Repository.init();
                 break;
             case "add":
-                checkArgsNumber(args,2);
+                checkArgsNumber(args, 2);
                 Repository.add(args[1]);
                 break;
             case "commit":
@@ -36,25 +36,31 @@ public class Main {
                 Repository.remove(args[1]);
                 break;
             case "log":
-                // TODO: handle the `log` command
+                checkArgsNumber(args, 1);
+                Repository.log();
                 break;
             case "global-log":
-                // TODO: handle the `global-log` command
+                checkArgsNumber(args, 1);
+                Repository.globalLog();
                 break;
             case "find":
-                // TODO: handle the `find` command
+                checkArgsNumber(args, 2);
+                Repository.find(args[1]);
                 break;
             case "status":
-                // TODO: handle the `status` command
+                checkArgsNumber(args, 1);
+                Repository.status();
                 break;
             case "checkout":
                 // TODO: handle the `checkout` command
                 break;
             case "branch":
-                // TODO: handle the `branch` command
+                checkArgsNumber(args, 2);
+                Repository.branch(args[1]);
                 break;
             case "rm-branch":
-                // TODO: handle the `rm-branch` command
+                checkArgsNumber(args, 2);
+                Repository.removeBranch(args[1]);
                 break;
             case "reset":
                 // TODO: handle the `reset` command

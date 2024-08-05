@@ -40,6 +40,7 @@ public class Commit implements Serializable {
     public Commit() {
         this.message = "initial commit";
         this.parents = new ArrayList<>();
+        parents.add("GOD");
         this.blobs = new ArrayList<>();
         this.pathToBlobs = new TreeMap<>();
         this.currentTime = new Date(0);
@@ -85,11 +86,30 @@ public class Commit implements Serializable {
         writeObject(commit, this);
     }
 
-    public void addBlob(String blobPath ,String id) {
-        pathToBlobs.put(blobPath, id);
+    public void addBlob(String blobPath, String commitId) {
+        pathToBlobs.put(blobPath, commitId);
     }
 
     public void removeBlob(String blobPath) {
         pathToBlobs.remove(blobPath);
+    }
+
+    public void print() {
+        System.out.println("===");
+        System.out.println("commit " + id);
+        if (parents.size() > 1) {
+            // TODO: Deal with merge commit.
+        }
+        System.out.println("Date: " + timeStamp);
+        System.out.println(message);
+        System.out.println();
+    }
+
+    public String getFirstParent() {
+        return parents.get(0);
+    }
+
+    public String getMessage() {
+        return message;
     }
 }

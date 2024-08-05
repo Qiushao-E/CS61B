@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
+
 import static gitlet.Utils.*;
 import static gitlet.Repository.STAGE_DIR;
 
@@ -24,10 +25,12 @@ public class Stage implements Serializable {
 
     public void addBlob(String filePath, String blobId) {
         pathToBlobs.put(filePath, blobId);
+        saveToFile();
     }
 
     public void removeBlob(String filePath) {
         pathToBlobs.remove(filePath);
+        saveToFile();
     }
 
     public void saveToFile() {
@@ -47,5 +50,12 @@ public class Stage implements Serializable {
     public void clear() {
         pathToBlobs.clear();
         saveToFile();
+    }
+
+    public void print() {
+        for (String filePath: pathToBlobs.keySet()) {
+            File file = new File(filePath);
+            System.out.println(file.getName());
+        }
     }
 }
