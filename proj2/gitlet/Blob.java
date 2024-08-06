@@ -38,4 +38,8 @@ public class Blob implements Serializable {
         createNewFile(blobFile);
         writeObject(blobFile, this);
     }
+
+    public byte[] getBytes() {
+        return bytes;
+    }
 }

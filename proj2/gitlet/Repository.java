@@ -1,6 +1,7 @@
 package gitlet;
 
 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,14 +155,27 @@ public class Repository {
     public static void add(String fileName) {
         checkIfTheDirectoryExist();
         File file = join(CWD, fileName);
-        checkFileExist(file);
-        Blob fileBlob = new Blob(file);
-        fileBlob.saveToFile();
-        Stage addStage = readAddStage();
-        addStage.addBlob(fileBlob);
-        addStage.saveToFile();
+        if (readRemoveStage().getPathToBlobs().containsKey(file.getPath())) {
+            readRemoveStage().removeBlob(file.getPath());
+        } else {
+            checkFileExist(file);
+            checkTheSame(file);
+            Blob fileBlob = new Blob(file);
+            fileBlob.saveToFile();
+            Stage addStage = readAddStage();
+            addStage.addBlob(fileBlob);
+            addStage.saveToFile();
+        }
     }
 
+    private static void checkTheSame(File file) {
+        if (readHEAD().getPathToBlobs().containsKey(file.getPath())) {
+            Blob fileBlob = new Blob(file);
+            if (Objects.equals(fileBlob.getId(), readHEAD().getPathToBlobs().get(file.getPath()))) {
+                System.exit(0);
+            }
+        }
+    }
     /**
      * Return the addStage.
      */
@@ -410,7 +424,125 @@ public class Repository {
         branchFile.delete();
     }
 
+    /**
+     * The checkout -- [fileName] command.
+     * @param fileName the name of the file
+     */
+    public static void checkoutHeadFile(String fileName) {
+        checkIfTheDirectoryExist();
+        checkoutFileHelper(readHEAD(), fileName);
+    }
 
+    /**
+     * The checkout [commitId] -- [fileName] command.
+     * @param commitId the commit id
+     * @param fileName the name of the file
+     */
+    public static void checkoutCommitFile(String commitId, String fileName) {
+        checkIfTheDirectoryExist();
+        File commitFile = join(COMMIT_DIR, commitId);
+        if (!commitFile.exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        } else {
+            Commit commit = readObject(commitFile, Commit.class);
+            checkoutFileHelper(commit, fileName);
+        }
+    }
 
+    /**
+     * The checkout [branchName] command.
+     * @param branchName the name of the branch
+     */
+    public static void checkoutBranch(String branchName) {
+        checkIfTheDirectoryExist();
+        File branchFile = join(BRANCH_DIR, branchName);
+        if (!branchFile.exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        String currentBranch = readContentsAsString(CURRENT_BRANCH);
+        if (currentBranch.equals(branchName)) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }
+        Branch branch = readObject(branchFile, Branch.class);
+        File newCommitFile = join(COMMIT_DIR, branch.getCommitId());
+        currentCommit = readObject(newCommitFile, Commit.class);
+        checkoutBranchHelper(currentCommit, readHEAD());
+        writeContents(CURRENT_BRANCH, branchName);
+        setHEAD();
+        clearStage();
+    }
 
+    /**
+     * Change the CWD status, from the old commit to the new commit.
+     * @param newCommit the new commit that will be checked out
+     * @param oldCommit the old commit
+     */
+    private static void checkoutBranchHelper(Commit newCommit, Commit oldCommit) {
+        Map<String, String> oldBlobs = oldCommit.getPathToBlobs();
+        Map<String, String> newBlobs = newCommit.getPathToBlobs();
+        for (String filePath: newBlobs.keySet()) {
+            File file = new File(filePath);
+            if (!oldBlobs.containsKey(filePath)) {
+                if (file.exists()) {
+                    System.out.println("There is an untracked file in the way;" +
+                            " delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        for (String filePath: newBlobs.keySet()) {
+            File file = new File(filePath);
+            checkoutFileHelper(newCommit, file.getName());
+        }
+        for (String filePath: oldBlobs.keySet()) {
+            if (!newBlobs.containsKey(filePath)) {
+                File deleteFile = new File(filePath);
+                deleteFile.delete();
+            }
+        }
+    }
+
+    /**
+     * Check out the file in the special commit, serving for the checkout command.
+     * @param commit the special commit
+     * @param fileName the name of the file
+     */
+    private static void checkoutFileHelper(Commit commit, String fileName) {
+        File file = join(CWD, fileName);
+        String filePath = file.getPath();
+        if (!commit.getPathToBlobs().containsKey(filePath)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        File blobFile = join(BLOB_DIR, commit.getPathToBlobs().get(filePath));
+        Blob blob = readObject(blobFile, Blob.class);
+        byte[] fileContent = blob.getBytes();
+        if (file.exists()) {
+            file.delete();
+        }
+        createNewFile(file);
+        writeContents(file, fileContent);
+    }
+
+    /**
+     * The reset [commitId] command.
+     * @param commitId the id of the commit which we will reset to
+     */
+    public static void reset(String commitId) {
+        File commitFile = join(COMMIT_DIR, commitId);
+        if (!commitFile.exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
+        Commit newCommit = readObject(commitFile, Commit.class);
+        Commit oldCommit = readHEAD();
+        checkoutBranchHelper(newCommit, oldCommit);
+        currentCommit = newCommit;
+        setHEAD();
+        setBranch();
+        clearStage();
+    }
 }

@@ -1,5 +1,7 @@
 package gitlet;
 
+import java.util.Objects;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author Qiushao
  */
@@ -24,7 +26,7 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                if (args.length == 1) {
+                if (args.length == 1 || args.length == 2 && args[1].isEmpty()) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }
@@ -52,7 +54,26 @@ public class Main {
                 Repository.status();
                 break;
             case "checkout":
-                // TODO: handle the `checkout` command
+                if (args.length == 3) {
+                    if (Objects.equals(args[1], "--")) {
+                        Repository.checkoutHeadFile(args[2]);
+                    } else {
+                        System.out.println("Incorrect operands.");
+                        System.exit(0);
+                    }
+                } else if (args.length == 4) {
+                    if (Objects.equals(args[2], "--")) {
+                        Repository.checkoutCommitFile(args[1], args[3]);
+                    } else {
+                        System.out.println("Incorrect operands.");
+                        System.exit(0);
+                    }
+                } else if (args.length == 2) {
+                    Repository.checkoutBranch(args[1]);
+                } else {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
                 break;
             case "branch":
                 checkArgsNumber(args, 2);
@@ -63,7 +84,8 @@ public class Main {
                 Repository.removeBranch(args[1]);
                 break;
             case "reset":
-                // TODO: handle the `reset` command
+                checkArgsNumber(args, 2);
+                Repository.reset(args[1]);
                 break;
             case "merge":
                 // TODO: handle the `merge` command
