@@ -1,16 +1,10 @@
 package gitlet;
 
-
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static gitlet.Utils.*;
-
-// TODO: any imports you need here
 
 /** Represents a gitlet repository.
  *  The repository structure:
@@ -33,8 +27,6 @@ import static gitlet.Utils.*;
  */
 public class Repository {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Repository class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided two examples for you.
@@ -65,9 +57,6 @@ public class Repository {
 
     /** The current branch. */
     private static final File CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
-
-    /* TODO: fill in the rest of this class. */
-
 
     /**
      * The init command
@@ -210,6 +199,19 @@ public class Repository {
         checkIfTheDirectoryExist();
         checkStageIsEmpty();
         Commit newCommit = new Commit(message, readHEAD());
+        commitHelper(newCommit);
+        newCommit.saveToFile();
+        currentCommit = newCommit;
+        setHEAD();
+        setBranch();
+        clearStage();
+    }
+
+    /**
+     * Set the commit map.
+     * @param newCommit the new commit
+     */
+    private static void commitHelper(Commit newCommit) {
         Map<String, String> addBlobs = readAddStage().getPathToBlobs();
         Map<String, String> removeBlobs = readRemoveStage().getPathToBlobs();
         Map<String, String> commitBlobs = newCommit.getPathToBlobs();
@@ -240,11 +242,6 @@ public class Repository {
         for (String blobToAdd: toAdd) {
             newCommit.addBlob(blobToAdd, addBlobs.get(blobToAdd));
         }
-        newCommit.saveToFile();
-        currentCommit = newCommit;
-        setHEAD();
-        setBranch();
-        clearStage();
     }
 
     /**
@@ -487,8 +484,7 @@ public class Repository {
             File file = new File(filePath);
             if (!oldBlobs.containsKey(filePath)) {
                 if (file.exists()) {
-                    System.out.println("There is an untracked file in the way;" +
-                            " delete it, or add and commit it first.");
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -541,6 +537,255 @@ public class Repository {
         Commit oldCommit = readHEAD();
         checkoutBranchHelper(newCommit, oldCommit);
         currentCommit = newCommit;
+        setHEAD();
+        setBranch();
+        clearStage();
+    }
+
+
+    /**
+     * The merge [branchName] command.
+     * @param branchName the name of the branch which will be merged
+     */
+    public static void merge(String branchName) {
+        checkIfTheDirectoryExist();
+        checkMerge(branchName);
+        Commit spiltCommit = getSpiltPoint(branchName);
+        File branchFile = join(BRANCH_DIR, branchName);
+        Branch branch = readObject(branchFile, Branch.class);
+        String branchCommitId = branch.getCommitId();
+        File branchCommitFile = join(COMMIT_DIR, branchCommitId);
+        Commit branchCommit = readObject(branchCommitFile, Commit.class);
+        easyMerge(branchCommit, spiltCommit);
+        Map<String, String> result = mergeResult(spiltCommit, branchCommit, readHEAD());
+        Boolean conflictFlag = checkMergeOperations(result);
+        mergeOperations(result, branchCommit);
+        mergeCommit(branchName, branchCommit);
+        if (conflictFlag) {
+            System.out.println("Encountered a merge conflict.");
+        }
+    }
+
+    /**
+     * Check if the merge operation is legal.
+     * @param branchName the name of the branch which will be merged
+     */
+    private static void checkMerge(String branchName) {
+        if (!readAddStage().isEmpty() || !readRemoveStage().isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+        File branchFile = join(BRANCH_DIR, branchName);
+        if (!branchFile.exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currentBranch = readContentsAsString(CURRENT_BRANCH);
+        if (Objects.equals(currentBranch, branchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+    }
+
+    /**
+     * @param branchName the name of the branch to be merged
+     * @return the spilt point commit of the head branch and the given branch
+     */
+    private static Commit getSpiltPoint(String branchName) {
+        File branchFile = join(BRANCH_DIR, branchName);
+        Branch branch = readObject(branchFile, Branch.class);
+        String commitId = branch.getCommitId();
+        File commitFile = join(COMMIT_DIR, commitId);
+        Commit commitA = readObject(commitFile, Commit.class);
+        Commit commitB = readHEAD();
+        Map<String, Integer> routeA = getRouteToInit(commitA);
+        Map<String, Integer> routeB = getRouteToInit(commitB);
+        String spiltPointCommitId = "";
+        int minValue = Integer.MAX_VALUE;
+        for (String commit: routeA.keySet()) {
+            if (routeB.containsKey(commit)) {
+                if (routeB.get(commit) < minValue) {
+                    spiltPointCommitId = commit;
+                    minValue = routeB.get(commit);
+                }
+            }
+        }
+        File spiltPointCommit = join(COMMIT_DIR, spiltPointCommitId);
+        return readObject(spiltPointCommit, Commit.class);
+    }
+
+    /**
+     * @param commit the start commit
+     * @return a map, including the route to the initial commit
+     */
+    private static Map<String, Integer> getRouteToInit(Commit commit) {
+        Map<String, Integer> route = new TreeMap<>();
+        int depth = 0;
+        while (!Objects.equals(commit.getMessage(), "initial commit")) {
+            route.put(commit.getId(), depth);
+            depth += 1;
+            String nextCommitId = commit.getFirstParent();
+            File nextCommitFile = join(COMMIT_DIR, nextCommitId);
+            commit = readObject(nextCommitFile, Commit.class);
+        }
+        route.put(commit.getId(), depth);
+        return route;
+    }
+
+    /**
+     * @param branchCommit the commit that branch pointed at
+     * @param spiltCommit the spilt point commit
+     */
+    private static void easyMerge(Commit branchCommit, Commit spiltCommit) {
+        if (Objects.equals(spiltCommit.getId(), readHEAD().getId())) {
+            checkoutBranchHelper(branchCommit, readHEAD());
+            System.out.println("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+        if (Objects.equals(spiltCommit.getId(), branchCommit.getId())) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+    }
+
+    /**
+     * @param spiltCommit the spilt point commit
+     * @param branchCommit the commit that branch pointed at
+     * @param current the current commit, a.k.a. the HEAD commit
+     * @return the merge result, representing in a map. The key is file path, the value is the blob id,
+     * and the "0" represents not exist, the "conflict" represents there exists conflicts
+     */
+    private static Map<String, String> mergeResult(Commit spiltCommit, Commit branchCommit, Commit current) {
+        Map<String, String> allFiles = new TreeMap<>();
+        Map<String, String> spiltCommitFiles = spiltCommit.getPathToBlobs();
+        Map<String, String> branchCommitFiles = branchCommit.getPathToBlobs();
+        Map<String, String> currentCommitFiles = current.getPathToBlobs();
+        Map<String, String> result = new TreeMap<>();
+        for (String filePath: spiltCommitFiles.keySet()) {
+            allFiles.put(filePath, spiltCommitFiles.get(filePath));
+        }
+        for (String filePath: branchCommitFiles.keySet()) {
+            allFiles.put(filePath, branchCommitFiles.get(filePath));
+        }
+        for (String filePath: currentCommitFiles.keySet()) {
+            allFiles.put(filePath, currentCommitFiles.get(filePath));
+        }
+        for (String filePath: allFiles.keySet()) {
+            if (!spiltCommitFiles.containsKey(filePath)) {
+                spiltCommitFiles.put(filePath, "0");
+            }
+            if (!branchCommitFiles.containsKey(filePath)) {
+                branchCommitFiles.put(filePath, "0");
+            }
+            if (!currentCommitFiles.containsKey(filePath)) {
+                currentCommitFiles.put(filePath, "0");
+            }
+        }
+        for (String filePath : allFiles.keySet()) {
+            if (Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
+                    && !Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+                result.put(filePath, currentCommitFiles.get(filePath));
+            } else if (!Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
+                    && Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+                result.put(filePath, branchCommitFiles.get(filePath));
+            } else if (Objects.equals(currentCommitFiles.get(filePath), branchCommitFiles.get(filePath))) {
+                result.put(filePath, currentCommitFiles.get(filePath));
+            } else if (!Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
+                    && !Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))
+                    && !Objects.equals(branchCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+                result.put(filePath, "conflict");
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Check if the merge result is legal.
+     * @param result the map that contains the merge result
+     */
+    private static Boolean checkMergeOperations(Map<String, String> result) {
+        Map<String, String> currentCommitFiles = readHEAD().getPathToBlobs();
+        for (String filePath: result.keySet()) {
+            if (!currentCommitFiles.containsKey(filePath)) {
+                File file = new File(filePath);
+                if (file.exists()) {
+                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+            }
+        }
+        return result.containsValue("conflict");
+    }
+
+    /**
+     * Do the merge operations.
+     * @param result the map that contains the merge result
+     */
+    private static void mergeOperations(Map<String, String> result, Commit branchCommit) {
+        Map<String, String> currentCommitFiles = readHEAD().getPathToBlobs();
+        Map<String, String> branchCommitFiles = branchCommit.getPathToBlobs();
+        for (String filePath: result.keySet()) {
+            switch (result.get(filePath)) {
+                case "0":
+                    if (currentCommitFiles.containsKey(filePath)) {
+                        File file = new File(filePath);
+                        remove(file.getName());
+                    }
+                    break;
+                case "conflict":
+                    //do conflict operations
+                    String currentBlobId = currentCommitFiles.get(filePath);
+                    String branchBlobId = branchCommitFiles.get(filePath);
+                    Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
+                    Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
+                    byte[] currentContents = currentBlob.getBytes();
+                    byte[] branchContents = branchBlob.getBytes();
+                    String current = new String(currentContents, StandardCharsets.UTF_8);
+                    String branch = new String(branchContents, StandardCharsets.UTF_8);
+                    String content = "<<<<<<< HEAD\n" + current + "=======\n" + branch + ">>>>>>>\n";
+                    File file = new File(filePath);
+                    if (file.exists()) {
+                        file.delete();
+                    }
+                    createNewFile(file);
+                    writeContents(file, content);
+                    break;
+                default:
+                    if (!currentCommitFiles.containsKey(filePath)) {
+                        Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
+                        mergeFileHelper(blob);
+                    } else if (!Objects.equals(result.get(filePath), currentCommitFiles.get(filePath))) {
+                        Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
+                        mergeFileHelper(blob);
+                    } else {
+                        break;
+                    }
+            }
+        }
+    }
+
+    /**
+     * Help create the file and add it to the add stage.
+     * @param fileBlob the blob of the file
+     */
+    private static void mergeFileHelper(Blob fileBlob) {
+        File file = new File(fileBlob.getFilePath());
+        byte[] contents = fileBlob.getBytes();
+        if (file.exists()) {
+            file.delete();
+        }
+        createNewFile(file);
+        writeContents(file, contents);
+        readAddStage().addBlob(fileBlob);
+    }
+
+    private static void mergeCommit(String branchName, Commit branchCommit) {
+        String message = "Merged " + branchName + " into " + readContentsAsString(CURRENT_BRANCH) + ".";
+        Commit mergeCommit = new Commit(message, readHEAD());
+        commitHelper(mergeCommit);
+        mergeCommit.addParent(branchCommit.getId());
+        mergeCommit.saveToFile();
+        currentCommit = mergeCommit;
         setHEAD();
         setBranch();
         clearStage();

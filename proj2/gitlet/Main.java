@@ -54,26 +54,7 @@ public class Main {
                 Repository.status();
                 break;
             case "checkout":
-                if (args.length == 3) {
-                    if (Objects.equals(args[1], "--")) {
-                        Repository.checkoutHeadFile(args[2]);
-                    } else {
-                        System.out.println("Incorrect operands.");
-                        System.exit(0);
-                    }
-                } else if (args.length == 4) {
-                    if (Objects.equals(args[2], "--")) {
-                        Repository.checkoutCommitFile(args[1], args[3]);
-                    } else {
-                        System.out.println("Incorrect operands.");
-                        System.exit(0);
-                    }
-                } else if (args.length == 2) {
-                    Repository.checkoutBranch(args[1]);
-                } else {
-                    System.out.println("Incorrect operands.");
-                    System.exit(0);
-                }
+                checkout(args);
                 break;
             case "branch":
                 checkArgsNumber(args, 2);
@@ -88,7 +69,8 @@ public class Main {
                 Repository.reset(args[1]);
                 break;
             case "merge":
-                // TODO: handle the `merge` command
+                checkArgsNumber(args, 2);
+                Repository.merge(args[1]);
                 break;
             default:
                 System.out.println("No command with that name exists.");
@@ -99,6 +81,29 @@ public class Main {
 
     private static void checkArgsNumber(String[] args, int number) {
         if (args.length != number) {
+            System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    private static void checkout(String[] args) {
+        if (args.length == 3) {
+            if (Objects.equals(args[1], "--")) {
+                Repository.checkoutHeadFile(args[2]);
+            } else {
+                System.out.println("Incorrect operands.");
+                System.exit(0);
+            }
+        } else if (args.length == 4) {
+            if (Objects.equals(args[2], "--")) {
+                Repository.checkoutCommitFile(args[1], args[3]);
+            } else {
+                System.out.println("Incorrect operands.");
+                System.exit(0);
+            }
+        } else if (args.length == 2) {
+            Repository.checkoutBranch(args[1]);
+        } else {
             System.out.println("Incorrect operands.");
             System.exit(0);
         }

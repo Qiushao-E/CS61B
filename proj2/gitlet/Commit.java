@@ -1,7 +1,5 @@
 package gitlet;
 
-// TODO: any imports you need here
-
 import java.io.File;
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -10,15 +8,12 @@ import java.util.*;
 import static gitlet.Utils.*;
 import static gitlet.Repository.COMMIT_DIR;
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
  *  does at a high level.
  *
  *  @author Qiushao
  */
 public class Commit implements Serializable {
     /**
-     * TODO: add instance variables here.
-     *
      * List all instance variables of the Commit class here with a useful
      * comment above them describing what that variable represents and how that
      * variable is used. We've provided one example for `message`.
@@ -33,7 +28,6 @@ public class Commit implements Serializable {
     private final String timeStamp;
     private final Date currentTime;
 
-    /* TODO: fill in the rest of this class. */
     /**
      * the init commit instructor
      */
@@ -98,7 +92,8 @@ public class Commit implements Serializable {
         System.out.println("===");
         System.out.println("commit " + id);
         if (parents.size() > 1) {
-            // TODO: Deal with merge commit.
+            String message = "Merge: " + parents.get(0).substring(0, 7) + " " + parents.get(1).substring(0, 7);
+            System.out.println(message);
         }
         System.out.println("Date: " + timeStamp);
         System.out.println(message);
@@ -111,5 +106,9 @@ public class Commit implements Serializable {
 
     public String getMessage() {
         return message;
+    }
+
+    public void addParent(String parent) {
+        this.parents.add(parent);
     }
 }
