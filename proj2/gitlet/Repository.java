@@ -439,7 +439,13 @@ public class Repository {
      */
     public static void checkoutCommitFile(String commitId, String fileName) {
         checkIfTheDirectoryExist();
-        File commitFile = join(COMMIT_DIR, commitId);
+        File commitFile;
+        if (commitId.length() < UID_LENGTH) {
+            commitFile = shortIdCommit(commitId);
+        } else {
+            commitFile = join(COMMIT_DIR, commitId);
+        }
+
         if (!commitFile.exists()) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
@@ -447,6 +453,22 @@ public class Repository {
             Commit commit = readObject(commitFile, Commit.class);
             checkoutFileHelper(commit, fileName);
         }
+    }
+
+    /**
+     * @param shortId the short id of the commit
+     * @return the commit file
+     */
+    private static File shortIdCommit(String shortId) {
+        List<String> commits = plainFilenamesIn(COMMIT_DIR);
+        int length = shortId.length();
+        assert commits != null;
+        for (String commitId: commits) {
+            if (commitId.substring(0, length).equals(shortId)) {
+                return join(COMMIT_DIR, commitId);
+            }
+        }
+        return null;
     }
 
     /**
@@ -731,7 +753,6 @@ public class Repository {
             if (!currentCommitFiles.containsKey(filePath)) {
                 File file = new File(filePath);
                 if (file.exists()) {
-                    System.out.println(filePath);
                     System.out.println("There is an untracked file in the way; "
                             + "delete it, or add and commit it first.");
                     System.exit(0);
