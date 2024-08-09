@@ -161,7 +161,8 @@ public class Repository {
     private static void checkTheSame(File file) {
         if (readHEAD().getPathToBlobs().containsKey(file.getPath())) {
             Blob fileBlob = new Blob(file);
-            if (Objects.equals(fileBlob.getId(), readHEAD().getPathToBlobs().get(file.getPath()))) {
+            if (Objects.equals(fileBlob.getId(),
+                    readHEAD().getPathToBlobs().get(file.getPath()))) {
                 System.exit(0);
             }
         }
@@ -666,7 +667,9 @@ public class Repository {
      * and the "0" represents not exist,
      * the "conflict" represents there exists conflicts
      */
-    private static Map<String, String> mergeResult(Commit spiltCommit, Commit branchCommit, Commit current) {
+    private static Map<String, String> mergeResult(Commit spiltCommit,
+                                                   Commit branchCommit,
+                                                   Commit current) {
         Map<String, String> allFiles = new TreeMap<>();
         Map<String, String> spiltCommitFiles = spiltCommit.getPathToBlobs();
         Map<String, String> branchCommitFiles = branchCommit.getPathToBlobs();
@@ -693,17 +696,25 @@ public class Repository {
             }
         }
         for (String filePath : allFiles.keySet()) {
-            if (Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
-                    && !Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+            if (Objects.equals(spiltCommitFiles.get(filePath),
+                    branchCommitFiles.get(filePath))
+                    && !Objects.equals(spiltCommitFiles.get(filePath),
+                    currentCommitFiles.get(filePath))) {
                 result.put(filePath, currentCommitFiles.get(filePath));
-            } else if (!Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
-                    && Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+            } else if (!Objects.equals(spiltCommitFiles.get(filePath),
+                    branchCommitFiles.get(filePath))
+                    && Objects.equals(spiltCommitFiles.get(filePath),
+                    currentCommitFiles.get(filePath))) {
                 result.put(filePath, branchCommitFiles.get(filePath));
-            } else if (Objects.equals(currentCommitFiles.get(filePath), branchCommitFiles.get(filePath))) {
+            } else if (Objects.equals(currentCommitFiles.get(filePath),
+                    branchCommitFiles.get(filePath))) {
                 result.put(filePath, currentCommitFiles.get(filePath));
-            } else if (!Objects.equals(spiltCommitFiles.get(filePath), branchCommitFiles.get(filePath))
-                    && !Objects.equals(spiltCommitFiles.get(filePath), currentCommitFiles.get(filePath))
-                    && !Objects.equals(branchCommitFiles.get(filePath), currentCommitFiles.get(filePath))) {
+            } else if (!Objects.equals(spiltCommitFiles.get(filePath),
+                    branchCommitFiles.get(filePath))
+                    && !Objects.equals(spiltCommitFiles.get(filePath),
+                    currentCommitFiles.get(filePath))
+                    && !Objects.equals(branchCommitFiles.get(filePath),
+                    currentCommitFiles.get(filePath))) {
                 result.put(filePath, "conflict");
             }
         }
@@ -734,7 +745,8 @@ public class Repository {
      * Do the merge operations.
      * @param result the map that contains the merge result
      */
-    private static void mergeOperations(Map<String, String> result, Commit branchCommit) {
+    private static void mergeOperations(Map<String, String> result,
+                                        Commit branchCommit) {
         Map<String, String> currentCommitFiles = readHEAD().getPathToBlobs();
         Map<String, String> branchCommitFiles = branchCommit.getPathToBlobs();
         for (String filePath: result.keySet()) {
@@ -751,20 +763,30 @@ public class Repository {
                     String content;
                     String current;
                     String branch;
-                    if (!Objects.equals(currentBlobId, "0") && !Objects.equals(branchBlobId, "0")) {
-                        Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
-                        Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
+                    if (!Objects.equals(currentBlobId, "0")
+                            && !Objects.equals(branchBlobId, "0")) {
+                        Blob currentBlob = readObject(join(BLOB_DIR,
+                                currentBlobId), Blob.class);
+                        Blob branchBlob = readObject(join(BLOB_DIR,
+                                branchBlobId), Blob.class);
                         byte[] currentContents = currentBlob.getBytes();
                         byte[] branchContents = branchBlob.getBytes();
-                        current = new String(currentContents, StandardCharsets.UTF_8);
-                        branch = new String(branchContents, StandardCharsets.UTF_8);
-                    } else if (Objects.equals(currentBlobId, "0") && !Objects.equals(branchBlobId, "0")) {
-                        Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
+                        current = new String(currentContents,
+                                StandardCharsets.UTF_8);
+                        branch = new String(branchContents,
+                                StandardCharsets.UTF_8);
+                    } else if (Objects.equals(currentBlobId, "0")
+                            && !Objects.equals(branchBlobId, "0")) {
+                        Blob branchBlob = readObject(join(BLOB_DIR,
+                                branchBlobId), Blob.class);
                         byte[] branchContents = branchBlob.getBytes();
                         current = "";
-                        branch = new String(branchContents, StandardCharsets.UTF_8);
-                    } else if (!Objects.equals(currentBlobId, "0") && Objects.equals(branchBlobId, "0")) {
-                        Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
+                        branch = new String(branchContents,
+                                StandardCharsets.UTF_8);
+                    } else if (!Objects.equals(currentBlobId, "0")
+                            && Objects.equals(branchBlobId, "0")) {
+                        Blob currentBlob = readObject(join(BLOB_DIR,
+                                currentBlobId), Blob.class);
                         byte[] currentContents = currentBlob.getBytes();
                         current = new String(currentContents, StandardCharsets.UTF_8);
                         branch = "";
@@ -783,11 +805,13 @@ public class Repository {
                     break;
                 default:
                     if (Objects.equals(currentCommitFiles.get(filePath), "0")) {
-                        Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
+                        Blob blob = readObject(join(BLOB_DIR,
+                                result.get(filePath)), Blob.class);
                         mergeFileHelper(blob);
                     } else if (!Objects.equals(result.get(filePath),
                             currentCommitFiles.get(filePath))) {
-                        Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
+                        Blob blob = readObject(join(BLOB_DIR,
+                                result.get(filePath)), Blob.class);
                         mergeFileHelper(blob);
                     } else {
                         break;
@@ -811,6 +835,11 @@ public class Repository {
         readAddStage().addBlob(file.getPath(), fileBlob.getId());
     }
 
+    /**
+     * Make the merge commit.
+     * @param branchName the branch name
+     * @param branchCommit the branch commit
+     */
     private static void mergeCommit(String branchName, Commit branchCommit) {
         String message = "Merged " + branchName + " into "
                 + readContentsAsString(CURRENT_BRANCH) + ".";

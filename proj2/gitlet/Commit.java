@@ -56,7 +56,8 @@ public class Commit implements Serializable {
     }
 
     private static String dateToTimeStamp(Date date) {
-        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z", Locale.US);
+        DateFormat dateFormat = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy Z",
+                Locale.US);
         return dateFormat.format(date);
     }
 
