@@ -82,7 +82,8 @@ public class Repository {
      */
     private static void checkIfTheDirectoryNotExist() {
         if (GITLET_DIR.exists()) {
-            System.out.println("A Gitlet version-control system already exists in the current directory.");
+            System.out.println("A Gitlet version-control system already exists "
+                     + "in the current directory.");
             System.exit(0);
         }
     }
@@ -314,7 +315,7 @@ public class Repository {
     public static void log() {
         checkIfTheDirectoryExist();
         currentCommit = readHEAD();
-        while (!Objects.equals(currentCommit.getFirstParent(), "GOD")) {
+        while (!currentCommit.getParents().isEmpty()) {
             currentCommit.print();
             File next = join(COMMIT_DIR, currentCommit.getFirstParent());
             currentCommit = readObject(next, Commit.class);
@@ -484,7 +485,8 @@ public class Repository {
             File file = new File(filePath);
             if (!oldBlobs.containsKey(filePath)) {
                 if (file.exists()) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.out.println("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -620,15 +622,22 @@ public class Repository {
      */
     private static Map<String, Integer> getRouteToInit(Commit commit) {
         Map<String, Integer> route = new TreeMap<>();
-        int depth = 0;
-        while (!Objects.equals(commit.getMessage(), "initial commit")) {
-            route.put(commit.getId(), depth);
-            depth += 1;
-            String nextCommitId = commit.getFirstParent();
-            File nextCommitFile = join(COMMIT_DIR, nextCommitId);
-            commit = readObject(nextCommitFile, Commit.class);
+        Queue<String> queue = new ArrayDeque<>();
+        queue.add(commit.getId());
+        route.put(commit.getId(), 0);
+        while (!queue.isEmpty()) {
+            String commitId = queue.poll();
+            File commitFile = join(COMMIT_DIR, commitId);
+            Commit thisCommit = readObject(commitFile, Commit.class);
+            for (String parentCommit: thisCommit.getParents()) {
+                if (route.containsKey(parentCommit)) {
+                    break;
+                } else {
+                    queue.add(parentCommit);
+                    route.put(parentCommit, route.get(commitId) + 1);
+                }
+            }
         }
-        route.put(commit.getId(), depth);
         return route;
     }
 
@@ -652,8 +661,10 @@ public class Repository {
      * @param spiltCommit the spilt point commit
      * @param branchCommit the commit that branch pointed at
      * @param current the current commit, a.k.a. the HEAD commit
-     * @return the merge result, representing in a map. The key is file path, the value is the blob id,
-     * and the "0" represents not exist, the "conflict" represents there exists conflicts
+     * @return the merge result, representing in a map. The key is file path,
+     * the value is the blob id,
+     * and the "0" represents not exist,
+     * the "conflict" represents there exists conflicts
      */
     private static Map<String, String> mergeResult(Commit spiltCommit, Commit branchCommit, Commit current) {
         Map<String, String> allFiles = new TreeMap<>();
@@ -709,7 +720,9 @@ public class Repository {
             if (!currentCommitFiles.containsKey(filePath)) {
                 File file = new File(filePath);
                 if (file.exists()) {
-                    System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.out.println(filePath);
+                    System.out.println("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
                     System.exit(0);
                 }
             }
@@ -733,16 +746,34 @@ public class Repository {
                     }
                     break;
                 case "conflict":
-                    //do conflict operations
                     String currentBlobId = currentCommitFiles.get(filePath);
                     String branchBlobId = branchCommitFiles.get(filePath);
-                    Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
-                    Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
-                    byte[] currentContents = currentBlob.getBytes();
-                    byte[] branchContents = branchBlob.getBytes();
-                    String current = new String(currentContents, StandardCharsets.UTF_8);
-                    String branch = new String(branchContents, StandardCharsets.UTF_8);
-                    String content = "<<<<<<< HEAD\n" + current + "=======\n" + branch + ">>>>>>>\n";
+                    String content;
+                    String current;
+                    String branch;
+                    if (!Objects.equals(currentBlobId, "0") && !Objects.equals(branchBlobId, "0")) {
+                        Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
+                        Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
+                        byte[] currentContents = currentBlob.getBytes();
+                        byte[] branchContents = branchBlob.getBytes();
+                        current = new String(currentContents, StandardCharsets.UTF_8);
+                        branch = new String(branchContents, StandardCharsets.UTF_8);
+                    } else if (Objects.equals(currentBlobId, "0") && !Objects.equals(branchBlobId, "0")) {
+                        Blob branchBlob = readObject(join(BLOB_DIR, branchBlobId), Blob.class);
+                        byte[] branchContents = branchBlob.getBytes();
+                        current = "";
+                        branch = new String(branchContents, StandardCharsets.UTF_8);
+                    } else if (!Objects.equals(currentBlobId, "0") && Objects.equals(branchBlobId, "0")) {
+                        Blob currentBlob = readObject(join(BLOB_DIR, currentBlobId), Blob.class);
+                        byte[] currentContents = currentBlob.getBytes();
+                        current = new String(currentContents, StandardCharsets.UTF_8);
+                        branch = "";
+                    } else {
+                        branch = "";
+                        current = "";
+                    }
+                    content = "<<<<<<< HEAD\n" + current + "=======\n"
+                            + branch + ">>>>>>>\n";
                     File file = new File(filePath);
                     if (file.exists()) {
                         file.delete();
@@ -751,10 +782,11 @@ public class Repository {
                     writeContents(file, content);
                     break;
                 default:
-                    if (!currentCommitFiles.containsKey(filePath)) {
+                    if (Objects.equals(currentCommitFiles.get(filePath), "0")) {
                         Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
                         mergeFileHelper(blob);
-                    } else if (!Objects.equals(result.get(filePath), currentCommitFiles.get(filePath))) {
+                    } else if (!Objects.equals(result.get(filePath),
+                            currentCommitFiles.get(filePath))) {
                         Blob blob = readObject(join(BLOB_DIR, result.get(filePath)), Blob.class);
                         mergeFileHelper(blob);
                     } else {
@@ -776,11 +808,12 @@ public class Repository {
         }
         createNewFile(file);
         writeContents(file, contents);
-        readAddStage().addBlob(fileBlob);
+        readAddStage().addBlob(file.getPath(), fileBlob.getId());
     }
 
     private static void mergeCommit(String branchName, Commit branchCommit) {
-        String message = "Merged " + branchName + " into " + readContentsAsString(CURRENT_BRANCH) + ".";
+        String message = "Merged " + branchName + " into "
+                + readContentsAsString(CURRENT_BRANCH) + ".";
         Commit mergeCommit = new Commit(message, readHEAD());
         commitHelper(mergeCommit);
         mergeCommit.addParent(branchCommit.getId());

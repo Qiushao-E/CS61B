@@ -34,7 +34,6 @@ public class Commit implements Serializable {
     public Commit() {
         this.message = "initial commit";
         this.parents = new ArrayList<>();
-        parents.add("GOD");
         this.blobs = new ArrayList<>();
         this.pathToBlobs = new TreeMap<>();
         this.currentTime = new Date(0);
@@ -62,7 +61,8 @@ public class Commit implements Serializable {
     }
 
     private void generateId() {
-        this.id =  sha1(message, parents.toString(), blobs.toString(), pathToBlobs.toString(), timeStamp);
+        this.id =  sha1(message, parents.toString(),
+                blobs.toString(), pathToBlobs.toString(), timeStamp);
     }
 
     public String getId() {
@@ -92,8 +92,9 @@ public class Commit implements Serializable {
         System.out.println("===");
         System.out.println("commit " + id);
         if (parents.size() > 1) {
-            String message = "Merge: " + parents.get(0).substring(0, 7) + " " + parents.get(1).substring(0, 7);
-            System.out.println(message);
+            String print = "Merge: " + parents.get(0).substring(0, 7)
+                    + " " + parents.get(1).substring(0, 7);
+            System.out.println(print);
         }
         System.out.println("Date: " + timeStamp);
         System.out.println(message);
@@ -110,5 +111,9 @@ public class Commit implements Serializable {
 
     public void addParent(String parent) {
         this.parents.add(parent);
+    }
+
+    public List<String> getParents() {
+        return this.parents;
     }
 }
