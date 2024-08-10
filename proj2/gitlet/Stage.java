@@ -58,4 +58,8 @@ public class Stage implements Serializable {
             System.out.println(file.getName());
         }
     }
+
+    public Boolean containsFile(String filePath) {
+        return this.pathToBlobs.containsKey(filePath);
+    }
 }

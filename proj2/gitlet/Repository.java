@@ -383,9 +383,62 @@ public class Repository {
         System.out.println("\n=== Removed Files ===");
         readRemoveStage().print();
         System.out.println("\n=== Modifications Not Staged For Commit ===");
-        System.out.println("\n=== Untracked Files ===\n");
+        modifiedFiles();
+        System.out.println("\n=== Untracked Files ===");
+        untrackedFiles();
+        System.out.println("\n");
     }
 
+    /**
+     * Print out the modified files.
+     */
+    private static void modifiedFiles() {
+        Map<String, String> currentFiles = readHEAD().getPathToBlobs();
+        for (String filePath: currentFiles.keySet()) {
+            File file = new File(filePath);
+            if (!file.exists()) {
+                if (!readRemoveStage().containsFile(filePath)) {
+                    System.out.println(file.getName() + " (deleted)");
+                }
+                break;
+            }
+            Blob fileBlob = new Blob(file);
+            if (!Objects.equals(fileBlob.getId(), currentFiles.get(filePath))) {
+                if (!readAddStage().containsFile(filePath)) {
+                    System.out.println(file.getName() + " (modified)");
+                }
+            }
+        }
+        for (String filePath: readAddStage().getPathToBlobs().keySet()) {
+            File file = new File(filePath);
+            if (!file.exists()) {
+                System.out.println(file.getName() + " (deleted)");
+                break;
+            }
+            Blob fileBlob = new Blob(file);
+            if (!Objects.equals(fileBlob.getId(),
+                    readAddStage().getPathToBlobs().get(filePath))) {
+                System.out.println(file.getName() + " (modified)");
+            }
+        }
+    }
+
+    /**
+     * Print out the untracked files.
+     */
+    private static void untrackedFiles() {
+        List<String> files = plainFilenamesIn(CWD);
+        assert files != null;
+        for (String fileName: files) {
+            File file = join(CWD, fileName);
+            String filePath = file.getPath();
+            if (!readHEAD().getPathToBlobs().containsKey(filePath)
+                    && !readAddStage().containsFile(filePath)
+                    && !readRemoveStage().containsFile(filePath)) {
+                System.out.println(fileName);
+            }
+        }
+    }
     /**
      * The branch [branchName] command.
      * @param branchName the new branch name
