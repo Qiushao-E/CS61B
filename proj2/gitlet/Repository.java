@@ -876,6 +876,9 @@ public class Repository {
                     }
                     createNewFile(file);
                     writeContents(file, content);
+                    Blob fileBlob = new Blob(file);
+                    fileBlob.saveToFile();
+                    readAddStage().addBlob(filePath, fileBlob.getId());
                     break;
                 default:
                     if (Objects.equals(currentCommitFiles.get(filePath), "0")) {
