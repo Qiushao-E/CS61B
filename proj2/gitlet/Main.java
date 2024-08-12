@@ -72,6 +72,9 @@ public class Main {
                 checkArgsNumber(args, 2);
                 Repository.merge(args[1]);
                 break;
+            case "lzf":
+                Repository.experience(args[1]);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
@@ -107,5 +110,9 @@ public class Main {
             System.out.println("Incorrect operands.");
             System.exit(0);
         }
+    }
+
+    private static void checkCommit(String[] args) {
+
     }
 }

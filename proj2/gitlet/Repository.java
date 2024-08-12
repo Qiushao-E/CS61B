@@ -33,30 +33,30 @@ public class Repository {
      */
 
     /** The current working directory. */
-    public static final File CWD = new File(System.getProperty("user.dir"));
+    public static File CWD = new File(System.getProperty("user.dir"));
 
     /** The .gitlet directory. */
-    public static final File GITLET_DIR = join(CWD, ".gitlet");
+    public static File GITLET_DIR = join(CWD, ".gitlet");
 
     /** The objects, commits, blobs directory. */
-    public static final File OBJECT_DIR = join(GITLET_DIR, "objects");
-    public static final File COMMIT_DIR = join(OBJECT_DIR, "commits");
-    public static final File BLOB_DIR = join(OBJECT_DIR, "blobs");
+    public static File OBJECT_DIR = join(GITLET_DIR, "objects");
+    public static File COMMIT_DIR = join(OBJECT_DIR, "commits");
+    public static File BLOB_DIR = join(OBJECT_DIR, "blobs");
 
     /** The branches directory. */
-    public static final File BRANCH_DIR = join(GITLET_DIR, "branches");
+    public static File BRANCH_DIR = join(GITLET_DIR, "branches");
 
     /** The stages directory. */
-    public static final File STAGE_DIR = join(GITLET_DIR, "stages");
+    public static File STAGE_DIR = join(GITLET_DIR, "stages");
 
     /** The HEAD pointer. */
-    private static final File HEAD = join(GITLET_DIR, "HEAD");
+    private static File HEAD = join(GITLET_DIR, "HEAD");
 
     /** The current commit. */
     private static Commit currentCommit;
 
     /** The current branch. */
-    private static final File CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
+    private static File CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
 
     /**
      * The init command
@@ -119,7 +119,7 @@ public class Repository {
     }
 
     /**
-     *  Initial the stages, including addStage and removeStage.
+     *  The Initial stages, including addStage and removeStage.
      */
     private static void initStage() {
         Stage addStage = new Stage("addStage");
@@ -428,14 +428,15 @@ public class Repository {
      */
     private static void untrackedFiles() {
         List<String> files = plainFilenamesIn(CWD);
-        assert files != null;
-        for (String fileName: files) {
-            File file = join(CWD, fileName);
-            String filePath = file.getPath();
-            if (!readHEAD().getPathToBlobs().containsKey(filePath)
-                    && !readAddStage().containsFile(filePath)
-                    && !readRemoveStage().containsFile(filePath)) {
-                System.out.println(fileName);
+        if (files != null) {
+            for (String fileName: files) {
+                File file = join(CWD, fileName);
+                String filePath = file.getPath();
+                if (!readHEAD().getPathToBlobs().containsKey(filePath)
+                        && !readAddStage().containsFile(filePath)
+                        && !readRemoveStage().containsFile(filePath)) {
+                    System.out.println(fileName);
+                }
             }
         }
     }
@@ -929,4 +930,34 @@ public class Repository {
         setBranch();
         clearStage();
     }
+
+    private static void changeCurrentWorkDirectory(String path) {
+        CWD = new File(path);
+        GITLET_DIR = join(CWD, ".gitlet");
+        OBJECT_DIR = join(GITLET_DIR, "objects");
+        COMMIT_DIR = join(OBJECT_DIR, "commits");
+        BLOB_DIR = join(OBJECT_DIR, "blobs");
+        BRANCH_DIR = join(GITLET_DIR, "branches");
+        STAGE_DIR = join(GITLET_DIR, "stages");
+        HEAD = join(GITLET_DIR, "HEAD");
+        CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
+    }
+     public static void experience(String path) {
+        help(path);
+        status();
+        help(System.getProperty("user.dir"));
+     }
+     public static void help(String path) {
+         System.out.println(CWD);
+         changeCurrentWorkDirectory(path);
+         System.out.println(CWD);
+         System.out.println(GITLET_DIR);
+         System.out.println(OBJECT_DIR);
+         System.out.println(COMMIT_DIR);
+         System.out.println(BLOB_DIR);
+         System.out.println(BRANCH_DIR);
+         System.out.println(STAGE_DIR);
+         System.out.println(HEAD);
+         System.out.println(CURRENT_BRANCH);
+     }
 }
