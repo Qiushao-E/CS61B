@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
@@ -189,6 +190,7 @@ class Utils {
         return plainFilenamesIn(new File(dir));
     }
 
+
     /* OTHER FILE UTILITIES */
 
     /** Return the concatentation of FIRST and OTHERS into a File designator,
@@ -250,6 +252,33 @@ class Utils {
                 file.createNewFile();
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            }
+        }
+    }
+
+
+    public static List<String> listFiles(String directoryPath) {
+        List<String> fileList = new ArrayList<>();
+        File directory = new File(directoryPath);
+
+        if (directory.exists() && directory.isDirectory()) {
+            listFilesRecursive(directory, "", fileList);
+        }
+
+        return fileList;
+    }
+
+    private static void listFilesRecursive(File directory, String parentPath, List<String> fileList) {
+        File[] files = directory.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    fileList.add(parentPath + file.getName());
+                } else if (file.isDirectory()) {
+                    String newParentPath = parentPath + file.getName() + "/";
+                    listFilesRecursive(file, newParentPath, fileList);
+                }
             }
         }
     }

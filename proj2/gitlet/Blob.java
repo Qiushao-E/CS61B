@@ -23,7 +23,7 @@ public class Blob implements Serializable {
     }
 
     private String generateId() {
-        return sha1(bytes, file.toString(), filePath);
+        return sha1(bytes, file.getName());
     }
 
     public String getId() {

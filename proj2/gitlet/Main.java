@@ -11,12 +11,8 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.out.println("Please enter a command.");
-            System.exit(0);
-        }
-        String firstArg = args[0];
-        switch (firstArg) {
+        checkMain(args);
+        switch (args[0]) {
             case "init":
                 checkArgsNumber(args, 1);
                 Repository.init();
@@ -26,11 +22,7 @@ public class Main {
                 Repository.add(args[1]);
                 break;
             case "commit":
-                if (args.length == 1 || args.length == 2 && args[1].isEmpty()) {
-                    System.out.println("Please enter a commit message.");
-                    System.exit(0);
-                }
-                checkArgsNumber(args, 2);
+                checkCommit(args);
                 Repository.commit(args[1]);
                 break;
             case "rm":
@@ -72,19 +64,42 @@ public class Main {
                 checkArgsNumber(args, 2);
                 Repository.merge(args[1]);
                 break;
-            case "lzf":
-                Repository.experience(args[1]);
+            case "add-remote":
+                checkArgsNumber(args, 3);
+                Repository.addRemote(args[1], args[2]);
+                break;
+            case "rm-remote":
+                checkArgsNumber(args, 2);
+                Repository.removeRemote(args[1]);
+                break;
+            case "push":
+                checkArgsNumber(args, 3);
+                Repository.push(args[1], args[2]);
+                break;
+            case "fetch":
+                checkArgsNumber(args, 3);
+                Repository.fetch(args[1], args[2]);
+                break;
+            case "pull":
+                checkArgsNumber(args, 3);
+                Repository.pull(args[1], args[2]);
                 break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
         }
-
     }
 
     private static void checkArgsNumber(String[] args, int number) {
         if (args.length != number) {
             System.out.println("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    private static void checkMain(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Please enter a command.");
             System.exit(0);
         }
     }
@@ -113,6 +128,10 @@ public class Main {
     }
 
     private static void checkCommit(String[] args) {
-
+        if (args.length == 1 || args.length == 2 && args[1].isEmpty()) {
+            System.out.println("Please enter a commit message.");
+            System.exit(0);
+        }
+        checkArgsNumber(args, 2);
     }
 }

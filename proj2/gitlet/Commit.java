@@ -8,7 +8,7 @@ import java.util.*;
 import static gitlet.Utils.*;
 import static gitlet.Repository.COMMIT_DIR;
 /** Represents a gitlet commit object.
- *  does at a high level.
+ *  Does at a high level.
  *
  *  @author Qiushao
  */
@@ -62,7 +62,7 @@ public class Commit implements Serializable {
     }
 
     private void generateId() {
-        this.id =  sha1(message, parents.toString(),
+        this.id = sha1(message, parents.toString(),
                 blobs.toString(), pathToBlobs.toString(), timeStamp);
     }
 

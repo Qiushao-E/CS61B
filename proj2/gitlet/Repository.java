@@ -1,5 +1,6 @@
 package gitlet;
 
+import java.awt.desktop.SystemEventListener;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -43,11 +44,14 @@ public class Repository {
     public static File COMMIT_DIR = join(OBJECT_DIR, "commits");
     public static File BLOB_DIR = join(OBJECT_DIR, "blobs");
 
-    /** The branches directory. */
+    /** The branches' directory. */
     public static File BRANCH_DIR = join(GITLET_DIR, "branches");
 
-    /** The stages directory. */
+    /** The stages' directory. */
     public static File STAGE_DIR = join(GITLET_DIR, "stages");
+
+    /** The remotes' directory. */
+    public static File REMOTE_DIR = join(GITLET_DIR, "remotes");
 
     /** The HEAD pointer. */
     private static File HEAD = join(GITLET_DIR, "HEAD");
@@ -68,6 +72,7 @@ public class Repository {
         mkdir(BLOB_DIR);
         mkdir(BRANCH_DIR);
         mkdir(STAGE_DIR);
+        mkdir(REMOTE_DIR);
         Commit initCommit = new Commit();
         initCommit.saveToFile();
         currentCommit = initCommit;
@@ -367,10 +372,9 @@ public class Repository {
      */
     public static void status() {
         checkIfTheDirectoryExist();
-        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        List<String> branches = listFiles(BRANCH_DIR.getPath());
         String currentBranch = readContentsAsString(CURRENT_BRANCH);
         System.out.println("=== Branches ===");
-        assert branches != null;
         for (String branchName: branches) {
             if (Objects.equals(branchName, currentBranch)) {
                 System.out.println("*" + branchName);
@@ -931,6 +935,10 @@ public class Repository {
         clearStage();
     }
 
+    /**
+     * Change the CWD.
+     * @param path the new path: .../xxx/yyy/zzz/dir
+     */
     private static void changeCurrentWorkDirectory(String path) {
         CWD = new File(path);
         GITLET_DIR = join(CWD, ".gitlet");
@@ -939,25 +947,220 @@ public class Repository {
         BLOB_DIR = join(OBJECT_DIR, "blobs");
         BRANCH_DIR = join(GITLET_DIR, "branches");
         STAGE_DIR = join(GITLET_DIR, "stages");
+        REMOTE_DIR = join(GITLET_DIR, "remotes");
         HEAD = join(GITLET_DIR, "HEAD");
         CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
     }
-     public static void experience(String path) {
-        help(path);
-        status();
-        help(System.getProperty("user.dir"));
-     }
-     public static void help(String path) {
-         System.out.println(CWD);
-         changeCurrentWorkDirectory(path);
-         System.out.println(CWD);
-         System.out.println(GITLET_DIR);
-         System.out.println(OBJECT_DIR);
-         System.out.println(COMMIT_DIR);
-         System.out.println(BLOB_DIR);
-         System.out.println(BRANCH_DIR);
-         System.out.println(STAGE_DIR);
-         System.out.println(HEAD);
-         System.out.println(CURRENT_BRANCH);
-     }
+
+    /**
+     * The add-remote [name] [path]/.gitlet command.
+     * @param remoteName the remote name
+     * @param remotePath the remote path: .../xxx/yyy/zzz/.gitlet
+     */
+    public static void addRemote(String remoteName, String remotePath) {
+        checkIfTheDirectoryExist();
+        List<String> remotes = plainFilenamesIn(REMOTE_DIR);
+        if (remotes != null && remotes.contains(remoteName)) {
+            System.out.println("A remote with that name already exists.");
+            System.exit(0);
+        }
+        String newWorkDirectory = remotePath.substring(0, remotePath.length() - 8);
+        Remote remote = new Remote(remoteName, newWorkDirectory);
+        remote.saveToFile();
+    }
+
+    /**
+     * The rm-remote [name] command.
+     * @param remoteName the remote name
+     */
+    public static void removeRemote(String remoteName) {
+        checkIfTheDirectoryExist();
+        List<String> remotes = plainFilenamesIn(REMOTE_DIR);
+        if (remotes == null || !remotes.contains(remoteName)) {
+           System.out.println("A remote with that name does not exist.");
+           System.exit(0);
+        }
+        File file = join(REMOTE_DIR, remoteName);
+        file.delete();
+    }
+
+    /**
+     * The fetch [remoteName] [remoteBranchName] command.
+     * @param remoteName the remote name
+     * @param remoteBranchName the remote branch name
+     */
+    public static void fetch(String remoteName, String remoteBranchName) {
+        checkIfTheDirectoryExist();
+        checkFetch(remoteName, remoteBranchName);
+        //注意此时工作目录已被更改为远程
+        File branchFile = join(BRANCH_DIR, remoteBranchName);
+        Branch remoteBranch = readObject(branchFile, Branch.class);
+        String remoteBranchCommitId = remoteBranch.getCommitId();
+        File commitFile = join(COMMIT_DIR, remoteBranch.getCommitId());
+        //1: 拿到远程分支，用BFS获取分支历史存在Map里
+        Map<String, Integer> branchHistory = getRouteToInit(readObject(commitFile, Commit.class));
+        //2: 回到本地工作目录
+        changeCurrentWorkDirectory(System.getProperty("user.dir"));
+        //3: 对不存在的commit和blob进行复制
+        File remoteFile = join(REMOTE_DIR, remoteName);
+        Remote remote = readObject(remoteFile, Remote.class);
+        String from = remote.getPath();
+        String to = System.getProperty("user.dir");
+        for (String commitId: branchHistory.keySet()) {
+            copyCommit(commitId, to, from);
+        }
+        //4: (如果不存在就)创建新的本地远程跟踪分支
+        changeCurrentWorkDirectory(to);
+        String localBranch = remoteName + "/" +remoteBranchName;
+        File localBranchFile = join(BRANCH_DIR, localBranch);
+        File localBranches = join(BRANCH_DIR, remoteName);
+        mkdir(localBranches);
+        changeCurrentWorkDirectory(from);
+        File remoteCommitFile = join(COMMIT_DIR, remoteBranchCommitId);
+        Commit remoteCommit = readObject(remoteCommitFile, Commit.class);
+        changeCurrentWorkDirectory(to);
+        if (!localBranchFile.exists()) {
+            Branch newBranch = new Branch(localBranch, remoteCommit);
+            newBranch.saveToFile();
+        } else {
+            Branch branch = readObject(localBranchFile, Branch.class);
+            branch.setCommitPointer(remoteCommit);
+            branch.saveToFile();
+        }
+        //5: 设置该分支为当前目录的HEAD commit，这一点和git不一样
+    }
+
+    /**
+     * Check if the fetch operation is legal and change the CWD.
+     * @param remoteName the remote name
+     * @param remoteBranchName the remote branch name
+     */
+    private static void checkFetch(String remoteName, String remoteBranchName) {
+        checkRemoteExists(remoteName);
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        if (branches == null || !branches.contains(remoteBranchName)) {
+            System.out.println("That remote does not have that branch.");
+            System.exit(0);
+        }
+    }
+
+    /**
+     * Check the remote ./.gitlet exists.
+     * @param remoteName the remote name
+     */
+    private static void checkRemoteExists(String remoteName) {
+        File remoteFile = join(REMOTE_DIR, remoteName);
+        if (!remoteFile.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        Remote remote = readObject(remoteFile, Remote.class);
+        if (!remote.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        changeCurrentWorkDirectory(remote.getPath());
+    }
+
+    /**
+     * Copy the special commit and its blobs from remote directory to local directory.
+     * @param commitId the commit id
+     * @param to the destination path
+     * @param from the origin path
+     */
+    private static void copyCommit(String commitId, String to, String from) {
+        changeCurrentWorkDirectory(to);
+        File commitFile = join(COMMIT_DIR, commitId);
+        if (commitFile.exists()) {
+            return;
+        }
+        changeCurrentWorkDirectory(from);
+        File remoteCommitFile = join(COMMIT_DIR, commitId);
+        Commit remoteCommit = readObject(remoteCommitFile, Commit.class);
+        byte[] content = readContents(remoteCommitFile);
+        changeCurrentWorkDirectory(to);
+        createNewFile(commitFile);
+        writeContents(commitFile, content);
+        for (String blobId: remoteCommit.getPathToBlobs().values()) {
+            copyBlob(blobId, to, from);
+        }
+    }
+
+    /**
+     * Copy the special blob.
+     * @param blobId the blob id
+     * @param to the destination path
+     * @param from the origin path
+     */
+    private static void copyBlob(String blobId, String to, String from) {
+        changeCurrentWorkDirectory(to);
+        File blobFile = join(BLOB_DIR, blobId);
+        if (blobFile.exists()) {
+            return;
+        }
+        changeCurrentWorkDirectory(from);
+        File remoteBlobFile = join(BLOB_DIR, blobId);
+        byte[] content = readContents(remoteBlobFile);
+        changeCurrentWorkDirectory(to);
+        createNewFile(blobFile);
+        writeContents(blobFile, content);
+    }
+
+    /**
+     * The push [remoteName] [remoteBranchName] command.
+     * @param remoteName the remote name
+     * @param remoteBranchName the remote branch name
+     */
+    public static void push(String remoteName, String remoteBranchName) {
+        checkIfTheDirectoryExist();
+        //1: 检查另一边的目录是否存在
+        checkRemoteExists(remoteName);
+        changeCurrentWorkDirectory(System.getProperty("user.dir"));
+        //2: 用BFS获取本地头部历史
+        Commit headCommit = readHEAD();
+        Map<String, Integer> localHistory = getRouteToInit(headCommit);
+        //3: 检查远程分支是否存在，若是，获取那边的头部，检查是否在本地历史中，进入第五步
+        File remoteFile = join(REMOTE_DIR, remoteName);
+        Remote remote = readObject(remoteFile, Remote.class);
+        changeCurrentWorkDirectory(remote.getPath());
+        List<String> branches = plainFilenamesIn(BRANCH_DIR);
+        assert branches != null;
+        if (branches.contains(remoteBranchName)) {
+            File branchFile = join(BRANCH_DIR, remoteBranchName);
+            Branch branch = readObject(branchFile, Branch.class);
+            if (!localHistory.containsKey(branch.getCommitId())) {
+                System.out.println("Please pull down remote changes before pushing.");
+                System.exit(0);
+            }
+        }
+        //4: 若否，直接进入第五步
+        //5: 向远程仓库复制commit和blob
+        String from = System.getProperty("user.dir");
+        String to = remote.getPath();
+        for (String commitId: localHistory.keySet()) {
+            copyCommit(commitId, to, from);
+        }
+        //6: 设置远程分支，记得改CWD
+        changeCurrentWorkDirectory(remote.getPath());
+        if (branches.contains(remoteBranchName)) {
+            File branchFile = join(BRANCH_DIR, remoteBranchName);
+            Branch branch = readObject(branchFile, Branch.class);
+            branch.setCommitPointer(headCommit);
+            branch.saveToFile();
+        } else {
+            Branch branch = new Branch(remoteBranchName, headCommit);
+            branch.saveToFile();
+        }
+    }
+
+    /**
+     * The pull [branchName] [remoteBranchName] command.
+     * @param remoteName the remote name
+     * @param remoteBranchName the remote branch name
+     */
+    public static void pull(String remoteName, String remoteBranchName) {
+        fetch(remoteName, remoteBranchName);
+        String branchName = remoteName + "/" + remoteBranchName;
+        merge(branchName);
+    }
 }
