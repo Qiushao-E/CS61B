@@ -62,8 +62,7 @@ public class Commit implements Serializable {
     }
 
     private void generateId() {
-        this.id = sha1(message, parents.toString(),
-                blobs.toString(), pathToBlobs.toString(), timeStamp);
+        this.id = sha1(message, parents.toString(), blobs.toString(), timeStamp);
     }
 
     public String getId() {
@@ -83,10 +82,12 @@ public class Commit implements Serializable {
 
     public void addBlob(String blobPath, String commitId) {
         pathToBlobs.put(blobPath, commitId);
+        blobs.add(commitId);
     }
 
     public void removeBlob(String blobPath) {
         pathToBlobs.remove(blobPath);
+        blobs.remove(pathToBlobs.get(blobPath));
     }
 
     public void print() {
