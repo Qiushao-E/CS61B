@@ -5,8 +5,11 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static gitlet.Repository.CWD;
 import static gitlet.Utils.*;
 import static gitlet.Repository.COMMIT_DIR;
+
 /** Represents a gitlet commit object.
  *  Does at a high level.
  *
@@ -117,5 +120,16 @@ public class Commit implements Serializable {
 
     public List<String> getParents() {
         return this.parents;
+    }
+
+    public void changePath() {
+        Map<String, String> newPaths = new TreeMap<>();
+        for (String oldPath: pathToBlobs.keySet()) {
+            File oldFilePath = new File(oldPath);
+            String fileName = oldFilePath.getName();
+            File newFilePath = join(CWD, fileName);
+            newPaths.put(newFilePath.getPath(), pathToBlobs.get(oldPath));
+        }
+        pathToBlobs = newPaths;
     }
 }

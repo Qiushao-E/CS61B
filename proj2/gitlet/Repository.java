@@ -1,6 +1,5 @@
 package gitlet;
 
-import java.awt.desktop.SystemEventListener;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -977,8 +976,8 @@ public class Repository {
         checkIfTheDirectoryExist();
         List<String> remotes = plainFilenamesIn(REMOTE_DIR);
         if (remotes == null || !remotes.contains(remoteName)) {
-           System.out.println("A remote with that name does not exist.");
-           System.exit(0);
+            System.out.println("A remote with that name does not exist.");
+            System.exit(0);
         }
         File file = join(REMOTE_DIR, remoteName);
         file.delete();
@@ -1011,7 +1010,7 @@ public class Repository {
         }
         //4: (如果不存在就)创建新的本地远程跟踪分支
         changeCurrentWorkDirectory(to);
-        String localBranch = remoteName + "/" +remoteBranchName;
+        String localBranch = remoteName + "/" + remoteBranchName;
         File localBranchFile = join(BRANCH_DIR, localBranch);
         File localBranches = join(BRANCH_DIR, remoteName);
         mkdir(localBranches);
@@ -1081,6 +1080,10 @@ public class Repository {
         changeCurrentWorkDirectory(to);
         createNewFile(commitFile);
         writeContents(commitFile, content);
+        Commit commit = readObject(commitFile, Commit.class);
+        //更改内部路径
+        commit.changePath();
+        commit.saveToFile();
         for (String blobId: remoteCommit.getPathToBlobs().values()) {
             copyBlob(blobId, to, from);
         }
@@ -1147,6 +1150,11 @@ public class Repository {
             Branch branch = readObject(branchFile, Branch.class);
             branch.setCommitPointer(headCommit);
             branch.saveToFile();
+            String currentBranch = readContentsAsString(CURRENT_BRANCH);
+            if (currentBranch.equals(remoteBranchName)) {
+                currentCommit = headCommit;
+                setHEAD();
+            }
         } else {
             Branch branch = new Branch(remoteBranchName, headCommit);
             branch.saveToFile();
