@@ -33,24 +33,24 @@ public class Repository {
      */
 
     /** The current working directory. */
-    public static File CWD = new File(System.getProperty("user.dir"));
+    private static File CWD = new File(System.getProperty("user.dir"));
 
     /** The .gitlet directory. */
-    public static File GITLET_DIR = join(CWD, ".gitlet");
+    private static File GITLET_DIR = join(CWD, ".gitlet");
 
     /** The objects, commits, blobs directory. */
-    public static File OBJECT_DIR = join(GITLET_DIR, "objects");
-    public static File COMMIT_DIR = join(OBJECT_DIR, "commits");
-    public static File BLOB_DIR = join(OBJECT_DIR, "blobs");
+    private static File OBJECT_DIR = join(GITLET_DIR, "objects");
+    private static File COMMIT_DIR = join(OBJECT_DIR, "commits");
+    private static File BLOB_DIR = join(OBJECT_DIR, "blobs");
 
     /** The branches' directory. */
-    public static File BRANCH_DIR = join(GITLET_DIR, "branches");
+    private static File BRANCH_DIR = join(GITLET_DIR, "branches");
 
     /** The stages' directory. */
-    public static File STAGE_DIR = join(GITLET_DIR, "stages");
+    private static File STAGE_DIR = join(GITLET_DIR, "stages");
 
     /** The remotes' directory. */
-    public static File REMOTE_DIR = join(GITLET_DIR, "remotes");
+    private static File REMOTE_DIR = join(GITLET_DIR, "remotes");
 
     /** The HEAD pointer. */
     private static File HEAD = join(GITLET_DIR, "HEAD");
@@ -61,6 +61,29 @@ public class Repository {
     /** The current branch. */
     private static File CURRENT_BRANCH = join(GITLET_DIR, "BRANCH");
 
+    public static File getCWD() {
+        return CWD;
+    }
+
+    public static File getCommitDir() {
+        return COMMIT_DIR;
+    }
+
+    public static File getBlobDir() {
+        return BLOB_DIR;
+    }
+
+    public static File getBranchDir() {
+        return BRANCH_DIR;
+    }
+
+    public static File getStageDir() {
+        return STAGE_DIR;
+    }
+
+    public static File getRemoteDir() {
+        return REMOTE_DIR;
+    }
     /**
      * The init command
      */

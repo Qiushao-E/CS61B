@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
-import static gitlet.Repository.STAGE_DIR;
+import static gitlet.Repository.getStageDir;
 
 public class Stage implements Serializable {
     private Map<String, String> pathToBlobs;
@@ -34,7 +34,7 @@ public class Stage implements Serializable {
     }
 
     public void saveToFile() {
-        File file = join(STAGE_DIR, stageName);
+        File file = join(getStageDir(), stageName);
         createNewFile(file);
         writeObject(file, this);
     }

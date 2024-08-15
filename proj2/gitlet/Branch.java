@@ -3,7 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import static gitlet.Utils.*;
-import static gitlet.Repository.BRANCH_DIR;
+import static gitlet.Repository.getBranchDir;
 
 public class Branch implements Serializable {
     private String commitPointer;
@@ -20,7 +20,7 @@ public class Branch implements Serializable {
     }
 
     public void saveToFile() {
-        File branch = join(BRANCH_DIR, branchName);
+        File branch = join(getBranchDir(), branchName);
         createNewFile(branch);
         writeObject(branch, this);
     }

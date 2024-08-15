@@ -3,7 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import static gitlet.Utils.*;
-import static gitlet.Repository.BLOB_DIR;
+import static gitlet.Repository.getBlobDir;
 
 public class Blob implements Serializable {
     private String id;
@@ -18,7 +18,7 @@ public class Blob implements Serializable {
         this.filePath = file.getPath();
         this.bytes = readContents(file);
         this.id = generateId();
-        this.blobFile = join(BLOB_DIR, id);
+        this.blobFile = join(getBlobDir(), id);
         this.blobFilePath = blobFile.getPath();
     }
 

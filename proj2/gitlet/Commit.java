@@ -6,9 +6,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static gitlet.Repository.CWD;
+import static gitlet.Repository.getCWD;
 import static gitlet.Utils.*;
-import static gitlet.Repository.COMMIT_DIR;
+import static gitlet.Repository.getCommitDir;
 
 /** Represents a gitlet commit object.
  *  Does at a high level.
@@ -78,7 +78,7 @@ public class Commit implements Serializable {
 
     public void saveToFile() {
         generateId();
-        File commit = join(COMMIT_DIR, id);
+        File commit = join(getCommitDir(), id);
         createNewFile(commit);
         writeObject(commit, this);
     }
@@ -127,7 +127,7 @@ public class Commit implements Serializable {
         for (String oldPath: pathToBlobs.keySet()) {
             File oldFilePath = new File(oldPath);
             String fileName = oldFilePath.getName();
-            File newFilePath = join(CWD, fileName);
+            File newFilePath = join(getCWD(), fileName);
             newPaths.put(newFilePath.getPath(), pathToBlobs.get(oldPath));
         }
         pathToBlobs = newPaths;

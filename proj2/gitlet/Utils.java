@@ -268,7 +268,9 @@ class Utils {
         return fileList;
     }
 
-    private static void listFilesRecursive(File directory, String parentPath, List<String> fileList) {
+    private static void listFilesRecursive(File directory,
+                                           String parentPath,
+                                           List<String> fileList) {
         File[] files = directory.listFiles();
 
         if (files != null) {

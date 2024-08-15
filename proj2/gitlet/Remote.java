@@ -3,7 +3,7 @@ package gitlet;
 import java.io.File;
 import java.io.Serializable;
 import static gitlet.Utils.*;
-import static gitlet.Repository.REMOTE_DIR;
+import static gitlet.Repository.getRemoteDir;
 
 public class Remote implements Serializable {
     private final String remoteName;
@@ -23,7 +23,7 @@ public class Remote implements Serializable {
     }
 
     public void saveToFile() {
-        File file = join(REMOTE_DIR, remoteName);
+        File file = join(getRemoteDir(), remoteName);
         createNewFile(file);
         writeObject(file, this);
     }
